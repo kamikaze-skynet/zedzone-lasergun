@@ -1,0 +1,125 @@
+# Builds Laser Gun and uploads it to the Steam Workshop with SteamCMD.
+#
+#   .\publish-workshop.ps1 -SteamUser <login>                     first upload: creates a Private item
+#   .\publish-workshop.ps1 -SteamUser <login> -Visibility Public  make it public
+#   .\publish-workshop.ps1 -SteamUser <login> -ChangeNote "Fixed X"
+#
+# Uses the login SteamCMD remembers. First time (or after "Access Denied"), sign SteamCMD in once:
+#   .\tools\steamcmd\steamcmd.exe +login <login> +quit     (it asks for password + Steam Guard itself)
+# This script never sees or saves your password.
+# The first upload writes the new item id to workshop\publishedfileid.txt; commit that file so
+# later runs update the same item instead of creating a new one.
+param(
+    [Parameter(Mandatory = $true)][string]$SteamUser,
+    [string]$GameDir = "D:\SteamLibrary\steamapps\common\ZED ZONE",
+    [ValidateSet("Public", "FriendsOnly", "Private", "Unlisted")][string]$Visibility = "Private",
+    [string]$ChangeNote = "",
+    [switch]$UpdateDescription,
+    [switch]$SkipBuild
+)
+$ErrorActionPreference = "Stop"
+Set-Location $PSScriptRoot
+
+$AppId   = "1211600"
+$Title   = "Laser Gun - laser rifle with battery packs and a chance to set targets on fire"
+$Content = Join-Path $PSScriptRoot "workshop\content"
+$ModDir  = Join-Path $Content "LaserGun"
+$Preview = Join-Path $PSScriptRoot "workshop\preview.png"
+$IdFile  = Join-Path $PSScriptRoot "workshop\publishedfileid.txt"
+$Dll     = Join-Path $PSScriptRoot "src\bin\Release\net6.0\LaserGun.dll"
+
+# ---- 1. build and stage the item folder
+if (-not $SkipBuild) {
+    dotnet build src\LaserGun.csproj -c Release "-p:GameDir=$GameDir"
+    if ($LASTEXITCODE -ne 0) { throw "Build failed" }
+}
+if (-not (Test-Path $Dll)) { throw "Missing $Dll - build first" }
+$Version = [System.Reflection.AssemblyName]::GetAssemblyName($Dll).Version.ToString(3)
+Copy-Item $Dll (Join-Path $ModDir "LaserGun.dll") -Force
+Copy-Item (Join-Path $PSScriptRoot "README.md") (Join-Path $ModDir "README.md") -Force
+$modJson = Join-Path $ModDir "mod.json"
+$json = Get-Content $modJson -Raw
+$json = $json -replace '"version"\s*:\s*"[^"]*"', ('"version": "' + $Version + '"')
+[System.IO.File]::WriteAllText($modJson, $json, (New-Object System.Text.UTF8Encoding($false)))
+Write-Host "==> Staged Laser Gun $Version in workshop\content\LaserGun" -ForegroundColor Cyan
+
+# ---- 2. SteamCMD (downloaded once into tools\steamcmd)
+$Tools = Join-Path $PSScriptRoot "tools\steamcmd"
+$SteamCmd = Join-Path $Tools "steamcmd.exe"
+if (-not (Test-Path $SteamCmd)) {
+    Write-Host "==> Downloading SteamCMD" -ForegroundColor Cyan
+    New-Item -ItemType Directory -Force $Tools | Out-Null
+    $zip = Join-Path $Tools "steamcmd.zip"
+    Invoke-WebRequest "https://steamcdn-a.akamaihd.net/client/installer/steamcmd.zip" -OutFile $zip -UseBasicParsing
+    Expand-Archive -LiteralPath $zip -DestinationPath $Tools -Force
+    Remove-Item $zip
+}
+
+# ---- 3. item description (VDF)
+$Id = "0"
+if (Test-Path $IdFile) { $Id = (Get-Content $IdFile -Raw).Trim() }
+$isNew = ($Id -eq "0" -or $Id -eq "")
+if (-not $ChangeNote) { $ChangeNote = "Laser Gun $Version" }
+
+function Clean([string]$s) { return ($s -replace '"', "'" -replace '\\', '/') }
+function P([string]$p) { return ($p -replace '\\', '/') }
+
+$lines = @(
+    '"workshopitem"', '{',
+    ('  "appid" "' + $AppId + '"'),
+    ('  "publishedfileid" "' + $Id + '"'),
+    ('  "contentfolder" "' + (P $Content) + '"'),
+    ('  "previewfile" "' + (P $Preview) + '"'),
+    ('  "changenote" "' + (Clean $ChangeNote) + '"')
+)
+if ($isNew -or $PSBoundParameters.ContainsKey("Visibility")) {
+    $vis = @{ Public = 0; FriendsOnly = 1; Private = 2; Unlisted = 3 }[$Visibility]
+    $lines += ('  "visibility" "' + $vis + '"')
+}
+if ($isNew -or $UpdateDescription) {
+    $desc = Get-Content (Join-Path $PSScriptRoot "workshop\description.txt") -Raw
+    $lines += ('  "title" "' + (Clean $Title) + '"')
+    $lines += ('  "description" "' + (Clean $desc) + '"')
+}
+$lines += '}'
+
+$Dist = Join-Path $PSScriptRoot "dist"
+New-Item -ItemType Directory -Force $Dist | Out-Null
+$Vdf = Join-Path $Dist "workshop_item.vdf"
+[System.IO.File]::WriteAllText($Vdf, ($lines -join "`r`n"), (New-Object System.Text.UTF8Encoding($false)))
+
+# ---- 4. upload
+if ($isNew) { Write-Host "==> Creating a new Workshop item ($Visibility)" -ForegroundColor Cyan }
+else        { Write-Host "==> Updating Workshop item $Id" -ForegroundColor Cyan }
+# Uses the login SteamCMD has saved. If it has none (or Steam rejected it), SteamCMD stops instead of
+# prompting and we print the one-time login command below. Every line is echoed and checked, because
+# SteamCMD can report a failed login or upload and still exit with 0.
+$failed = $false
+$ErrorActionPreference = "Continue"   # SteamCMD stderr lines must not stop the script
+& $SteamCmd "+@NoPromptForPassword" 1 "+@ShutdownOnFailedCommand" 1 +login $SteamUser +workshop_build_item $Vdf +quit 2>&1 | ForEach-Object {
+    $line = "$_"
+    Write-Host $line
+    if ($line -cmatch 'ERROR|FAILED|Access Denied|Login Failure|Invalid Password|Two-factor|Steam Guard|Not logged on') { $failed = $true }
+}
+if ($LASTEXITCODE -ne 0) { $failed = $true }
+$ErrorActionPreference = "Stop"
+
+# SteamCMD writes the item id back into the VDF after a successful upload.
+$after = Get-Content $Vdf -Raw
+if (-not $failed -and $after -match '"publishedfileid"\s+"(\d+)"' -and $Matches[1] -ne "0") {
+    $newId = $Matches[1]
+    if ($isNew) {
+        Set-Content -Path $IdFile -Value $newId -Encoding ASCII
+        Write-Host "    saved item id to workshop\publishedfileid.txt - commit it" -ForegroundColor Yellow
+    }
+    Write-Host ""
+    Write-Host " Done: https://steamcommunity.com/sharedfiles/filedetails/?id=$newId" -ForegroundColor Green
+} else {
+    Write-Host ""
+    Write-Host " Upload FAILED - the Workshop item was not updated. Read the SteamCMD output above." -ForegroundColor Red
+    Write-Host " If it says Access Denied, Login Failure or asks for Steam Guard, sign SteamCMD in once (it asks" -ForegroundColor Red
+    Write-Host " for your password and Steam Guard code and remembers you), then run this script again:" -ForegroundColor Red
+    Write-Host "     & `"$SteamCmd`" +login $SteamUser +quit" -ForegroundColor Yellow
+    Write-Host " (First upload: accept the Workshop agreement on the Steam website if it asks.)" -ForegroundColor Red
+    exit 1
+}

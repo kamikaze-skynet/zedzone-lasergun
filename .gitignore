@@ -1,0 +1,10 @@
+bin/
+obj/
+dist/
+tools/steamcmd/
+*.user
+.vs/
+.idea/
+# the built DLL is copied in at publish time
+workshop/content/LaserGun/*.dll
+workshop/content/LaserGun/README.md

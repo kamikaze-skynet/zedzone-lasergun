@@ -1,0 +1,7 @@
+{
+    "name": "Laser Gun",
+    "version": "1.0.0",
+    "author": "girthy_mods",
+    "description": "Laser Rifle logic: near-instant beam shots, laser sound, beam visuals and a chance to set targets on fire.",
+    "enabled": true
+}

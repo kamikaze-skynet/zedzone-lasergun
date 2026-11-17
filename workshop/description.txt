@@ -1,0 +1,27 @@
+A military laser rifle for ZED ZONE.
+
+[b]Adds[/b]
+[list]
+[*] Laser Rifle - full-auto laser, about 400 shots a minute, 350 damage per shot
+[*] Laser Battery (50) - rechargeable power pack, 50 shots, loads like a magazine
+[*] Laser Charge - the ammo you load into batteries (crafted from the game's battery, 1 battery = 25 charges)
+[/list]
+All three can be crafted, and the rifle and battery turn up rarely in buildings.
+
+[b]How it fights[/b]
+[list]
+[*] The shot travels at 1500 m/s, so it lands the moment you pull the trigger
+[*] A bright red beam flashes from the emitter to the target
+[*] Every hit has a 15% chance to set the target on fire (uses the game's own burning, so water and dodging put it out)
+[*] Shots that hit grass or wood have a small chance to start a fire there
+[*] Almost no recoil and a tight spread
+[*] A sharp electric crack on every shot
+[/list]
+
+In co-op, other players see your beams and hear the shots. Everyone needs the mod.
+
+Every number (damage, fire chance, beam colour and width, sound volume) can be changed in BepInEx\config\girthy_mods.zedzone.lasergun.cfg. Want a different sound? Drop any WAV named fire.wav into the mod's LaserGun folder.
+
+Needs BepInEx (IL2CPP) with the ZED ZONE mod loader. Log: BepInEx\LaserGun.log
+
+[b]Settings and keys:[/b] Press [b]F11[/b] in game to open [b]Mod Menu[/b] (Steam installs it with this mod) to change this mod's settings without editing files.

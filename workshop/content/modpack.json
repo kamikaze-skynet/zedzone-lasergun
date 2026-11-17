@@ -1,0 +1,26 @@
+{
+    "packName": "Laser Gun",
+    "packDescription": "A rugged military laser rifle in chipped olive paint. Instead of bullets it fires a focused beam of light that arrives the instant you pull the trigger: no drop, no lead, no travel time. Each shot hits for 350 and has a chance to set its target on fire. Runs on a Laser Battery of 50 shots; recharge batteries with Laser Charges. Fires about 400 shots a minute with almost no recoil, and makes a sharp electric crack you will learn to love.",
+    "author": "girthy_mods",
+    "createTime": "2026-11-17 00:00:00",
+    "mods": [
+        {
+            "modGuid": "93b81951-6391-4707-beb4-0ea971889dc7",
+            "modType": "RangedWeapon",
+            "itemName": "Laser Rifle",
+            "relativePath": "RangedWeapons/93b81951-6391-4707-beb4-0ea971889dc7.zedmod"
+        },
+        {
+            "modGuid": "b0286f7b-0596-4c17-a7ed-aab63338872a",
+            "modType": "Ammo",
+            "itemName": "Laser Charge",
+            "relativePath": "Ammo/b0286f7b-0596-4c17-a7ed-aab63338872a.zedmod"
+        },
+        {
+            "modGuid": "cef9bff0-579f-401b-a5a2-890dc6fd3ec8",
+            "modType": "Magazine",
+            "itemName": "Laser Battery (50)",
+            "relativePath": "Magazine/cef9bff0-579f-401b-a5a2-890dc6fd3ec8.zedmod"
+        }
+    ]
+}
