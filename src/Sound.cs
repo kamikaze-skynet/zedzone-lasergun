@@ -40,17 +40,65 @@ namespace LaserGun
             return _clip;
         }
 
-        internal static void Shot(Vector3 at)
+        // Your own shots play on one dedicated 2D channel: every shot stops the sound and starts it again from the
+        // beginning, so each shot is the whole clip from its start and fast fire repeats it shot after shot.
+        // Other players' shots play at their gun from a few 3D channels, each restarted the same way.
+        static AudioSource _own;
+        static readonly AudioSource[] _remote = new AudioSource[4];
+        static int _nextRemote;
+        static bool _warned;
+
+        static AudioSource MakeSource(string name, bool spatial)
+        {
+            var go = new GameObject(name);
+            UnityEngine.Object.DontDestroyOnLoad(go);
+            go.hideFlags = HideFlags.HideAndDontSave;
+            var src = go.AddComponent<AudioSource>();
+            src.playOnAwake = false; src.loop = false; src.priority = 32;
+            src.spatialBlend = spatial ? 1f : 0f;
+            if (spatial) { src.rolloffMode = AudioRolloffMode.Linear; src.minDistance = 4f; src.maxDistance = 40f; src.dopplerLevel = 0f; }
+            return src;
+        }
+
+        static void Volume(AudioSource src, float vol)
+        {
+            try { AudioController.ApplySoundVolume(src, vol); } catch { src.volume = Mathf.Clamp01(vol); }
+        }
+
+        internal static void Shot(Vector3 at, bool remote)
         {
             float vol = Settings.SoundVolume.Value;
             if (vol <= 0f) return;
-            if (Time.time - _last < 0.03f) return;
+            if (Time.time - _last < 0.03f && !remote) return;
             var clip = Clip();
             if (clip == null) return;
-            var ac = AudioController.instance;
-            if (ac == null) return;
-            _last = Time.time;
-            ac.PlayAt(clip, at, vol);
+            try
+            {
+                AudioSource src;
+                if (!remote)
+                {
+                    if (_own == null) _own = MakeSource("LaserGun.Sound", false);
+                    src = _own;
+                    _last = Time.time;
+                }
+                else
+                {
+                    int k = _nextRemote; _nextRemote = (_nextRemote + 1) % _remote.Length;
+                    if (_remote[k] == null) _remote[k] = MakeSource("LaserGun.Sound" + k, true);
+                    src = _remote[k];
+                    src.transform.position = new Vector3(at.x, at.y, 0f);
+                }
+                src.Stop();
+                if (src.clip != clip) src.clip = clip;
+                Volume(src, vol);
+                src.time = 0f;
+                src.Play();
+            }
+            catch (Exception e)
+            {
+                if (!_warned) { _warned = true; PLog.Warn("Laser sound channel failed, using the game's sound player: " + e.Message); }
+                try { AudioController.instance?.PlayAt(clip, at, vol); } catch { }
+            }
         }
     }
 

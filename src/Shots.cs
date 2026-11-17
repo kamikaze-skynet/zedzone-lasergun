@@ -21,7 +21,7 @@ namespace LaserGun
             Vector3 muzzle = b.transform.position;
             try { var sp = b.startPos; if (sp != Vector3.zero) muzzle = sp; } catch { }
             Beam.Fire(b);
-            try { Sound.Shot(muzzle); } catch (Exception e) { PLog.Debug("Sound: " + e.Message); }
+            try { Sound.Shot(muzzle, remote); } catch (Exception e) { PLog.Debug("Sound: " + e.Message); }
             if (Settings.VerboseLog.Value) PLog.Debug($"Fired: item {id}{(remote ? " (other player)" : "")} speed {b.bulletSpeed:0} dmg {b.bulletDamage:0}");
         }
 

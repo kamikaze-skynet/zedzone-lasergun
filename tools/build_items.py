@@ -69,10 +69,10 @@ def rifle():
         "airPressure_greenZoneSize": 0.0, "airPressure_chargeZoneSize": 0.0, "movingPartRange": 0.0,
         "hasMainGripBaseline": True, "mainGripBaselineY": 0.09031009674072266, "handPoseVersion": 1,
         "partModifiable_Barrel": False, "partModifiable_Aimer": True, "partModifiable_Gunstock": False,
-        # The mod plays its own crack (sound/fire.wav); the game clip is a quiet fallback underneath.
+        # The mod plays its own sound (sound/fire.wav) on every shot; the game's own shot sound is muted.
         "bulletPrefabName": "50BMGBullet", "fireClip": "50BMG_Fire_0", "fillingClip": "AK_Reload_2",
         "reloadClip": "Uzi_Reload", "reloadFinishedClip": "Shotgun_Reload", "boltActionClip": "",
-        "fireClipVolume": 0.15, "fireClipPitch": 2.2, "fillingClipVolume": 1.0, "fillingClipPitch": 1.4,
+        "fireClipVolume": 0.0, "fireClipPitch": 2.2, "fillingClipVolume": 1.0, "fillingClipPitch": 1.4,
         "reloadClipVolume": 1.0, "reloadClipPitch": 1.2, "reloadFinishedClipVolume": 1.0, "reloadFinishedClipPitch": 1.3,
         "boltActionClipVolume": 1.0, "boltActionClipPitch": 1.0,
         "weaponType": 2, "weaponSlotSize": 1, "gunActionType": 0, "singleHand": False,
