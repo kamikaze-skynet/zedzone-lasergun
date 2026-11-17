@@ -228,7 +228,7 @@ namespace LaserGun
             var sp = PackSprite(gunPpu); if (sp == null) { sr.enabled = false; return; }
             if (sr.sprite != sp) sr.sprite = sp;
             sr.sortingLayerID = body.sortingLayerID;
-            sr.sortingOrder = body.sortingOrder + 1;
+            sr.sortingOrder = body.sortingOrder - 1; // behind the gun body, so the well covers the top of the pack
             sr.flipX = body.flipX; sr.flipY = body.flipY;
             sr.color = body.color;
             sr.transform.localPosition = pos;
