@@ -92,6 +92,17 @@ namespace LaserGun
             return Capacity(pack, out _);
         }
 
+        static bool IsWeaponBattery(ItemManager im, int id)
+        {
+            try
+            {
+                var a = im.GetItemAttrById(id);
+                var d = a != null ? im.GetRandomDataByAttr(a, false, false) : null;
+                return d != null && BasicItemUI.IsWeaponBattery(d);
+            }
+            catch { return false; }
+        }
+
         internal static void Check()
         {
             var im = ItemManager.instance;
@@ -121,17 +132,23 @@ namespace LaserGun
 
             try { gun.feedingType = ItemAttr_RangedWeapon.FeedingType.Battery; } catch (Exception e) { PLog.Warn("Couldn't set battery feeding: " + e.Message); }
 
-            // Template: the smallest game battery that isn't a vehicle battery. The Laser Battery Pack copies its
-            // battery setup (type, features, model) with PackCapacity energy, so loaders and chargers treat it as a battery.
+            // Template: the smallest game battery the game itself lets you load into a battery weapon
+            // (BasicItemUI.IsWeaponBattery); if none says yes, the smallest that isn't a vehicle battery.
+            // The Laser Battery Pack copies its battery setup (type, feature, model) with PackCapacity energy.
             int packId = IdOf(PackGuid);
-            int tmplId = -1; float tmplCap = 0f;
+            int tmplId = -1; float tmplCap = 0f; bool tmplWeapon = false;
+            var weaponOk = new List<string>();
             foreach (var c in caps)
             {
                 if (c.id == packId) continue;
                 string l = (c.name + " " + c.model).ToLowerInvariant();
-                if (l.Contains("car") || l.Contains("vehicle") || l.Contains("truck")) continue;
-                if (tmplCap <= 0f || c.cap < tmplCap) { tmplCap = c.cap; tmplId = c.id; }
+                bool vehicle = l.Contains("car") || l.Contains("vehicle") || l.Contains("truck");
+                bool weapon = IsWeaponBattery(im, c.id);
+                if (weapon) weaponOk.Add(c.name);
+                bool better = weapon && !tmplWeapon || (weapon == tmplWeapon && !vehicle && (tmplCap <= 0f || c.cap < tmplCap));
+                if (better) { tmplCap = c.cap; tmplId = c.id; tmplWeapon = weapon; }
             }
+            PLog.Info("Power: batteries the game loads into weapons: " + (weaponOk.Count > 0 ? string.Join(", ", weaponOk) : "none reported"));
             float packCap = 0f;
             var pack = packId > 0 ? im.GetItemAttrById(packId) : null;
             var tmpl = tmplId > 0 ? im.GetItemAttrById(tmplId) : null;
@@ -141,7 +158,7 @@ namespace LaserGun
             {
                 try { packCap = MakeBattery(pack, tmpl, Settings.PackCapacity.Value); }
                 catch (Exception e) { PLog.Warn("Power: couldn't make the Laser Battery Pack a battery: " + e); }
-                PLog.Info($"Power: Laser Battery Pack {packId} copies {Name(tmpl)} ({tmplId}), capacity {packCap:0.##} (type {pack.itemType})");
+                PLog.Info($"Power: Laser Battery Pack {packId} copies {Name(tmpl)} ({tmplId}), capacity {packCap:0.##} (type {pack.itemType}, weapon battery: {IsWeaponBattery(im, packId)}, hidden {pack.hiddenItem})");
             }
 
             // Reference battery for the drain: the configured one, else the Laser Battery Pack.
