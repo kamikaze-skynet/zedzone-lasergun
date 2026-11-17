@@ -65,6 +65,43 @@ namespace LaserGun
             SoundFile = c.Bind("Sound", "File", "fire.wav", "WAV file played on every shot, next to LaserGun.dll (or its sound folder). Replace it with your own sound if you like.");
 
             VerboseLog = c.Bind("Debug", "VerboseLog", false, "Log every shot, hit and fire to BepInEx\\LaserGun.log.");
+
+            ResetToNewDefaults(c);
         }
+
+        // BepInEx keeps each player's own .cfg, so a changed default never reaches anyone who already has the file.
+        // Bump this number whenever the defaults change: on first start with the new version, every setting is put
+        // back to the mod's default once (players can change them again afterwards in Mod Menu).
+        const int DefaultsVersion = 2;
+
+        static void ResetToNewDefaults(ConfigFile c)
+        {
+            var stamp = c.Bind("Internal", "DefaultsVersion", 0, "Which set of defaults this file was last reset to. Don't edit.");
+            if (stamp.Value >= DefaultsVersion) return;
+            bool save = c.SaveOnConfigSet; c.SaveOnConfigSet = false;
+            int n = 0;
+            try
+            {
+                foreach (var kv in c)
+                {
+                    var e = kv.Value;
+                    if (e == null || ReferenceEquals(e, stamp)) continue;
+                    if (!Equals(e.BoxedValue, e.DefaultValue)) { e.BoxedValue = e.DefaultValue; n++; }
+                }
+                // drop settings older versions wrote that this version no longer uses
+                try
+                {
+                    var prop = HarmonyLib.AccessTools.Property(typeof(ConfigFile), "OrphanedEntries");
+                    if (prop?.GetValue(c) is System.Collections.IDictionary orphans) orphans.Clear();
+                }
+                catch { }
+                stamp.Value = DefaultsVersion;
+            }
+            finally { c.SaveOnConfigSet = save; }
+            c.Save();
+            PendingResetNote = n > 0 ? $"Settings reset to the new defaults (set {DefaultsVersion}, {n} values changed back)" : null;
+        }
+
+        internal static string PendingResetNote;
     }
 }

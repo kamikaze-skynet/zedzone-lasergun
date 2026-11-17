@@ -18,6 +18,7 @@ namespace LaserGun
             Settings.Bind(Config);
             PLog.Verbose = Settings.VerboseLog.Value;
             PLog.Open(Log, Version);
+            if (Settings.PendingResetNote != null) PLog.Info(Settings.PendingResetNote);
 
             try
             {
