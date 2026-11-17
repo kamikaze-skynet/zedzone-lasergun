@@ -116,7 +116,12 @@ namespace LaserGun
         {
             if (!Mine(w)) return -1f;
             _lastShot = UnityEngine.Time.time;
-            try { var gp = w.gunPoint; if (gp != null) { Muzzle = gp.position; MuzzleFrame = Time.frameCount; } } catch { }
+            try
+            {
+                if (MuzzleOf(w, out var m)) { Muzzle = m; MuzzleFrame = Time.frameCount; }
+                else { var gp = w.gunPoint; if (gp != null) { Muzzle = gp.position; MuzzleFrame = Time.frameCount; } }
+            }
+            catch { }
             var d = w.weaponData;
             return HasBattery(d) ? Energy(d) : -1f;
         }
@@ -139,25 +144,62 @@ namespace LaserGun
         static readonly Vector2 PackCentrePx = new Vector2(-38.5f, -38f);
         const float PackWidthPx = 26f;
 
-        static Sprite PackSprite()
+        // Rifle sprite geometry in its own pixels (Main region 299x118, see tools/build_items.py), measured from the
+        // region's centre, y up. The game builds the weapon sprite at its own pixels-per-unit, so everything here is
+        // converted with the live sprite's pixelsPerUnit instead of assuming the mod.json value.
+        static readonly Vector2 MuzzlePx = new Vector2(121f, -8f);
+        static Texture2D _tex; static float _spritePpu;
+
+        static Sprite PackSprite(float gunPpu)
         {
-            if (_sprite != null || _spriteFailed) return _sprite;
+            float ppu = gunPpu * 112f / PackWidthPx;
+            if (_sprite != null && Mathf.Abs(_spritePpu - ppu) < 0.01f) return _sprite;
+            if (_spriteFailed) return null;
             try
             {
-                using var s = typeof(Battery).Assembly.GetManifestResourceStream("LaserGun.pack.png");
-                if (s == null) { _spriteFailed = true; PLog.Warn("Pack sprite resource missing"); return null; }
-                var ms = new MemoryStream(); s.CopyTo(ms);
-                var tex = new Texture2D(2, 2, TextureFormat.RGBA32, false);
-                if (!ImageConversion.LoadImage(tex, ms.ToArray())) { _spriteFailed = true; return null; }
-                tex.filterMode = FilterMode.Bilinear;
-                tex.hideFlags = HideFlags.HideAndDontSave;
+                if (_tex == null)
+                {
+                    using var s = typeof(Battery).Assembly.GetManifestResourceStream("LaserGun.pack.png");
+                    if (s == null) { _spriteFailed = true; PLog.Warn("Pack sprite resource missing"); return null; }
+                    var ms = new MemoryStream(); s.CopyTo(ms);
+                    var tex = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+                    if (!ImageConversion.LoadImage(tex, ms.ToArray())) { _spriteFailed = true; return null; }
+                    tex.filterMode = FilterMode.Bilinear;
+                    tex.hideFlags = HideFlags.HideAndDontSave;
+                    _tex = tex;
+                }
                 var bb = new Rect(8, 2, 112, 140); // opaque part of the 128x144 canvas
-                float ppu = 230f * bb.width / PackWidthPx;
-                _sprite = Sprite.Create(tex, new Rect(bb.x, tex.height - bb.y - bb.height, bb.width, bb.height), new Vector2(0.5f, 0.5f), ppu);
+                _sprite = Sprite.Create(_tex, new Rect(bb.x, _tex.height - bb.y - bb.height, bb.width, bb.height), new Vector2(0.5f, 0.5f), ppu);
                 _sprite.hideFlags = HideFlags.HideAndDontSave;
+                _spritePpu = ppu;
+                PLog.Info($"Pack sprite built for a rifle sprite at {gunPpu:0.#} px/unit");
             }
             catch (Exception e) { _spriteFailed = true; PLog.Warn("Pack sprite failed: " + e.Message); }
             return _sprite;
+        }
+
+        // A point given in rifle sprite pixels -> local position on the weapon sprite renderer.
+        static bool Local(SpriteRenderer body, Vector2 px, out Vector3 local, out float ppu)
+        {
+            local = Vector3.zero; ppu = 230f;
+            var sp = body != null ? body.sprite : null; if (sp == null) return false;
+            ppu = sp.pixelsPerUnit; if (ppu < 1f) return false;
+            // if the game made the sprite at another size than the 299 px region, scale with it
+            float k = sp.rect.width > 1f ? sp.rect.width / 299f : 1f;
+            var c = sp.bounds.center;
+            float x = px.x * k / ppu, y = px.y * k / ppu;
+            local = new Vector3(c.x + (body.flipX ? -x : x), c.y + (body.flipY ? -y : y), 0f);
+            ppu /= k;
+            return true;
+        }
+
+        internal static bool MuzzleOf(BasicRangedWeapon w, out Vector3 world)
+        {
+            world = Vector3.zero;
+            var body = w.weaponSpriteRenderer;
+            if (!Local(body, MuzzlePx, out var l, out _)) return false;
+            world = body.transform.TransformPoint(l);
+            return true;
         }
 
         internal static void Draw(BasicRangedWeapon w)
@@ -170,25 +212,24 @@ namespace LaserGun
             var wd = w.weaponData;
             Sync(wd);
             bool loaded = HasBattery(wd) && !w.isReloading && !(Swapping && wd.Pointer == _heldPtr);
+            if (!Local(body, PackCentrePx, out var pos, out var gunPpu)) return;
             if (sr == null)
             {
                 if (!loaded) return;
-                var sp = PackSprite(); if (sp == null) return;
                 var go = new GameObject(ChildName);
                 go.transform.SetParent(body.transform, false);
                 sr = go.AddComponent<SpriteRenderer>();
-                sr.sprite = sp;
                 try { sr.sharedMaterial = body.sharedMaterial; } catch { }
-                PLog.Info($"Pack sprite added to the rifle (layer {body.sortingLayerName}, order {body.sortingOrder + 1}, body scale {body.transform.lossyScale.x:0.##})");
             }
             sr.enabled = loaded && body.enabled;
             if (!sr.enabled) return;
+            var sp = PackSprite(gunPpu); if (sp == null) { sr.enabled = false; return; }
+            if (sr.sprite != sp) sr.sprite = sp;
             sr.sortingLayerID = body.sortingLayerID;
             sr.sortingOrder = body.sortingOrder + 1;
             sr.flipX = body.flipX; sr.flipY = body.flipY;
             sr.color = body.color;
-            var c = PackCentrePx / 230f;
-            sr.transform.localPosition = new Vector3(body.flipX ? -c.x : c.x, body.flipY ? -c.y : c.y, 0f);
+            sr.transform.localPosition = pos;
             sr.transform.localRotation = Quaternion.identity;
             sr.transform.localScale = Vector3.one;
         }
