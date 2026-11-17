@@ -106,7 +106,7 @@ namespace LaserGun
             var rt = img.rectTransform;
             rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0.5f, 0.5f);
             rt.anchoredPosition = new Vector2(px.x * sx, px.y * sy);
-            rt.sizeDelta = new Vector2(Battery.PackWidth * sx * size, Battery.PackWidth * 140f / 112f * sy * size);
+            rt.sizeDelta = new Vector2(Battery.PackWidth * sx * size * Settings.PackWide.Value, Battery.PackWidth * 140f / 112f * sy * size);
             if (img.sprite != sp) img.sprite = sp;
             img.color = icon.color;
             if (!_logged) { _logged = true; PLog.Info($"Inventory pack picture: gun icon {w:0}x{h:0} (sprite {gs.width:0}x{gs.height:0}, keep aspect {icon.preserveAspect}, rotation {iconRt.localEulerAngles.z:0})"); }

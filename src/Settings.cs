@@ -18,7 +18,7 @@ namespace LaserGun
         internal static ConfigEntry<int> BatteryItemId, ShotsPerBattery, PackCapacity;
         
         internal static ConfigEntry<bool> ShowPack, ShowPower;
-        internal static ConfigEntry<float> EnergyPerShot, FireRate, TrailLinger, MuzzleX, MuzzleY, PackX, PackY, PackSize;
+        internal static ConfigEntry<float> EnergyPerShot, FireRate, TrailLinger, MuzzleX, MuzzleY, PackX, PackY, PackSize, PackWide;
         internal static ConfigEntry<float> EnergyPerSecond;
         internal static ConfigEntry<bool> VerboseLog;
 
@@ -52,6 +52,7 @@ namespace LaserGun
             PackX = c.Bind("Visuals", "BatteryPackForward", 0f, new ConfigDescription("Moves the battery pack drawn on the gun forward (+) or back (-), in gun-sprite pixels. Applies at once.", R(-80, 80)));
             PackY = c.Bind("Visuals", "BatteryPackUp", 6f, new ConfigDescription("Moves the battery pack drawn on the gun up (+) or down (-), in gun-sprite pixels. Applies at once.", R(-40, 40)));
             PackSize = c.Bind("Visuals", "BatteryPackSize", 1f, new ConfigDescription("Size of the battery pack drawn on the gun (1 = normal). Applies at once.", R(0.3f, 3f)));
+            PackWide = c.Bind("Visuals", "BatteryPackWidth", 1.12f, new ConfigDescription("Makes the battery pack drawn on the gun wider (above 1) or narrower (below 1) without changing its height. Applies at once.", R(0.5f, 2f)));
             MuzzleX = c.Bind("Visuals", "BeamStartForward", -10f, new ConfigDescription("Moves where the beam starts along the barrel, in gun-sprite pixels (+ forward, - back toward the player). Applies at once.", R(-150, 60)));
             MuzzleY = c.Bind("Visuals", "BeamStartUp", 20f, new ConfigDescription("Moves where the beam starts up (+) or down (-) on the gun, in gun-sprite pixels. Applies at once.", R(-40, 40)));
             TrailLinger = c.Bind("Visuals", "TrailLinger", 1.2f, new ConfigDescription("Seconds a glowing trail hangs in the air along each shot's path before it fades out. 0 = off.", R(0, 10)));

@@ -141,7 +141,7 @@ namespace LaserGun
         static bool _spriteFailed;
         const string ChildName = "LaserGun_Pack";
         // Where the pack sits, in rifle sprite pixels from the sprite's centre (ppu 230): under the body, at the slot.
-        static readonly Vector2 PackCentrePx = new Vector2(-38.5f, -38f);
+        static readonly Vector2 PackCentrePx = new Vector2(-37.75f, -38f);
         const float PackWidthPx = 26f;
 
         // Rifle sprite geometry in its own pixels (Main region 299x118, see tools/build_items.py), measured from the
@@ -245,7 +245,7 @@ namespace LaserGun
             sr.color = body.color;
             sr.transform.localPosition = pos;
             sr.transform.localRotation = Quaternion.identity;
-            float ps = Settings.PackSize.Value; sr.transform.localScale = new Vector3(ps, ps, 1f);
+            float ps = Settings.PackSize.Value; sr.transform.localScale = new Vector3(ps * Settings.PackWide.Value, ps, 1f);
         }
     }
 }
