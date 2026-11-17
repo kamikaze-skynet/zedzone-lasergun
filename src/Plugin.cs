@@ -43,6 +43,7 @@ namespace LaserGun
         void LateUpdate()
         {
             try { Battery.Frame(); } catch (Exception e) { if (!_warned) { _warned = true; PLog.Warn("Battery frame failed: " + e); } }
+            PackIcon.Tick();
             try { Beam.Tick(); }
             catch (Exception e) { PLog.Error("Beam update failed", e); Beam.Clear(); }
         }

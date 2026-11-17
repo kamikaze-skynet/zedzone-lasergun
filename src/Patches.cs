@@ -20,6 +20,9 @@ namespace LaserGun
             Patch(h, typeof(BasicRangedWeapon), nameof(BasicRangedWeapon.OnFireButtonDown), nameof(FireDown_Pre), null);
             Patch(h, typeof(BasicRangedWeapon), nameof(BasicRangedWeapon.Fire_EnergyWeapon), nameof(FireEnergy_Pre), null);
             Patch(h, typeof(BasicRangedWeapon), nameof(BasicRangedWeapon.Fire_Cartridge), nameof(FireCartridge_Pre), nameof(FireCartridge_Post));
+            Patch(h, typeof(BasicItemUI), nameof(BasicItemUI.RefreshItemUI), null, nameof(ItemUI_Post));
+            Patch(h, typeof(BasicItemUI), nameof(BasicItemUI.RefreshItemUIIconSpriteImmediate), null, nameof(ItemUI_Post));
+            Patch(h, typeof(BasicItemUI), nameof(BasicItemUI.RefreshItemUIIconIfAlive), null, nameof(ItemUI_Post));
             Patch(h, typeof(ZedZone.Net.NetProjectileSync), nameof(ZedZone.Net.NetProjectileSync.SpawnVisualBullet), nameof(Spawn_Pre), nameof(Spawn_Post));
         }
 
@@ -100,6 +103,8 @@ namespace LaserGun
         {
             try { Battery.BeforeClearAmmo(rangedWeaponItemData); } catch (Exception e) { PLog.Warn("Unload hook failed: " + e.Message); }
         }
+
+        static void ItemUI_Post(BasicItemUI __instance) { PackIcon.Refreshed(__instance); }
 
         static bool _drawWarned;
         static void WeaponLate_Post(BasicRangedWeapon __instance)

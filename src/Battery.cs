@@ -150,6 +150,28 @@ namespace LaserGun
         static readonly Vector2 MuzzlePx = new Vector2(119f, 10.5f);
         static Texture2D _tex; static float _spritePpu;
 
+        internal const float PackWidth = PackWidthPx;
+        internal static Vector2 PackPx() => PackCentrePx + new Vector2(Settings.PackX.Value, Settings.PackY.Value);
+
+        internal static Texture2D PackTexture()
+        {
+            if (_tex != null) return _tex;
+            if (_spriteFailed) return null;
+            try
+            {
+                using var s = typeof(Battery).Assembly.GetManifestResourceStream("LaserGun.pack.png");
+                if (s == null) { _spriteFailed = true; PLog.Warn("Pack sprite resource missing"); return null; }
+                var ms = new MemoryStream(); s.CopyTo(ms);
+                var tex = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+                if (!ImageConversion.LoadImage(tex, ms.ToArray())) { _spriteFailed = true; return null; }
+                tex.filterMode = FilterMode.Bilinear;
+                tex.hideFlags = HideFlags.HideAndDontSave;
+                _tex = tex;
+            }
+            catch (Exception e) { _spriteFailed = true; PLog.Warn("Pack sprite failed: " + e.Message); }
+            return _tex;
+        }
+
         static Sprite PackSprite(float gunPpu)
         {
             float ppu = gunPpu * 112f / PackWidthPx;
@@ -157,22 +179,12 @@ namespace LaserGun
             if (_spriteFailed) return null;
             try
             {
-                if (_tex == null)
-                {
-                    using var s = typeof(Battery).Assembly.GetManifestResourceStream("LaserGun.pack.png");
-                    if (s == null) { _spriteFailed = true; PLog.Warn("Pack sprite resource missing"); return null; }
-                    var ms = new MemoryStream(); s.CopyTo(ms);
-                    var tex = new Texture2D(2, 2, TextureFormat.RGBA32, false);
-                    if (!ImageConversion.LoadImage(tex, ms.ToArray())) { _spriteFailed = true; return null; }
-                    tex.filterMode = FilterMode.Bilinear;
-                    tex.hideFlags = HideFlags.HideAndDontSave;
-                    _tex = tex;
-                }
+                if (PackTexture() == null) return null;
                 var bb = new Rect(8, 2, 112, 140); // opaque part of the 128x144 canvas
                 _sprite = Sprite.Create(_tex, new Rect(bb.x, _tex.height - bb.y - bb.height, bb.width, bb.height), new Vector2(0.5f, 0.5f), ppu);
                 _sprite.hideFlags = HideFlags.HideAndDontSave;
                 _spritePpu = ppu;
-                PLog.Info($"Pack sprite built for a rifle sprite at {gunPpu:0.#} px/unit");
+                PLog.Info($"Pack sprite built for a rifle sprite at {gunPpu:0.#} px/unit, drawn behind the gun");
             }
             catch (Exception e) { _spriteFailed = true; PLog.Warn("Pack sprite failed: " + e.Message); }
             return _sprite;
