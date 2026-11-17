@@ -3,10 +3,9 @@ A military laser rifle for ZED ZONE.
 [b]Adds[/b]
 [list]
 [*] Laser Rifle - full-auto laser, about 400 shots a minute, 350 damage per shot
-[*] Laser Battery (50) - rechargeable power pack, 50 shots, loads like a magazine
-[*] Laser Charge - the ammo you load into batteries (crafted from the game's battery, 1 battery = 25 charges)
 [/list]
-All three can be crafted, and the rifle and battery turn up rarely in buildings.
+[b]Runs on the game's own batteries.[/b] Press R to swap a battery from your pack into the rifle. One small battery gives about 50 shots (bigger batteries last longer), and you recharge them with the game's chargers.
+The rifle can be crafted and turns up rarely in buildings.
 
 [b]How it fights[/b]
 [list]

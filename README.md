@@ -6,8 +6,8 @@ targets on fire.
 | Item | What it is |
 |---|---|
 | Laser Rifle | Full auto, ~400 RPM (fireInterval 0.15 s), 350 damage, 1500 m/s, recoil 0.25, spread 0.6 |
-| Laser Battery (50) | Magazine for the rifle, 50 shots |
-| Laser Charge | Ammo loaded into batteries. Crafted from the game's battery (1 -> 25), found by name at start-up |
+| (game batteries) | The rifle uses the game's battery feeding (feedingType 2): R swaps a battery in, firing drains it, chargers refill it |
+| Laser Battery / Laser Charge (old) | 1.0.0 items, now hidden; kept so old saves load |
 
 The plugin (`src/`, BepInEx IL2CPP, `girthy_mods.zedzone.lasergun`):
 
@@ -17,7 +17,7 @@ The plugin (`src/`, BepInEx IL2CPP, `girthy_mods.zedzone.lasergun`):
 - `Beam.cs` draws the beam (two short trails) and hides the game's bullet sprite.
 - `Sound.cs` loads `fire.wav` from the mod folder (any PCM/float WAV) and plays it at the muzzle.
 - `Remote.cs` gives other players' shots the same beam and sound.
-- `Recipes.cs` points the Laser Charge recipe at the game's battery item.
+- `Power.cs` sets battery feeding and tunes `batteryEnergyPerSec` so the smallest battery gives `[Battery] ShotsPerBattery` shots (logs every battery's capacity).
 - `Bundled.cs` loads `items\*.zedmod` next to the DLL (Girthy Mods / manual installs).
 
 Settings: `BepInEx\config\girthy_mods.zedzone.lasergun.cfg`, or Mod Menu (F11). Log: `BepInEx\LaserGun.log`.

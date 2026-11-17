@@ -11,7 +11,7 @@ namespace LaserGun
     public class Plugin : BasePlugin
     {
         public const string Guid = "girthy_mods.zedzone.lasergun";
-        public const string Version = "1.0.0";
+        public const string Version = "1.1.0";
 
         public override void Load()
         {

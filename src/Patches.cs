@@ -30,7 +30,7 @@ namespace LaserGun
         static void LoadAll_Post()
         {
             try { Bundled.LoadMissing(); } catch (Exception e) { PLog.Error("Loading bundled items failed", e); }
-            try { Recipes.Check(); } catch (Exception e) { PLog.Error("Recipe check failed", e); }
+            try { Power.Check(); } catch (Exception e) { PLog.Error("Battery setup failed", e); }
         }
 
         static void Init_Post(BasicBullet __instance)

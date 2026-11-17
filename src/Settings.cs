@@ -15,7 +15,8 @@ namespace LaserGun
         internal static ConfigEntry<string> BeamColor;
         internal static ConfigEntry<float> SoundVolume;
         internal static ConfigEntry<string> SoundFile;
-        internal static ConfigEntry<int> BatteryItemId;
+        internal static ConfigEntry<int> BatteryItemId, ShotsPerBattery;
+        internal static ConfigEntry<float> EnergyPerSecond;
         internal static ConfigEntry<bool> VerboseLog;
 
         static AcceptableValueRange<float> R(float a, float b) => new AcceptableValueRange<float>(a, b);
@@ -26,8 +27,10 @@ namespace LaserGun
             WeaponModGuids = c.Bind("General", "WeaponModGuids", "93b81951-6391-4707-beb4-0ea971889dc7",
                 "Comma-separated modGuids of weapons that fire lasers. Default: this mod's Laser Rifle.");
             ExtraWeaponIds = c.Bind("General", "ExtraWeaponIds", "", "Extra item ids (comma-separated) that also fire lasers, e.g. a vanilla gun.");
-            BatteryItemId = c.Bind("General", "BatteryItemId", 0,
-                "Item id of the game's battery used to craft Laser Charges (1 battery = 25 charges). 0 = find it by name; VerboseLog lists candidates.");
+            BatteryItemId = c.Bind("Battery", "ReferenceBatteryId", 0,
+                "Item id of the battery that gives exactly ShotsPerBattery shots (bigger batteries give more). 0 = the smallest non-vehicle battery. LaserGun.log lists every battery with its id.");
+            ShotsPerBattery = c.Bind("Battery", "ShotsPerBattery", 50, new ConfigDescription("Shots from one full reference battery.", new AcceptableValueRange<int>(1, 1000)));
+            EnergyPerSecond = c.Bind("Battery", "EnergyPerSecond", 0f, new ConfigDescription("Override: battery energy (Wh) used per second of firing. 0 = work it out from ShotsPerBattery.", R(0, 10000)));
 
             Damage = c.Bind("Laser", "Damage", 350f, new ConfigDescription("Damage per shot. 0 keeps the weapon's own damage.", R(0, 20000)));
             BeamSpeed = c.Bind("Laser", "BeamSpeed", 1500f, new ConfigDescription("Speed (m/s) of the shot. Light is instant; this is fast enough to look instant on screen.", R(50, 5000)));

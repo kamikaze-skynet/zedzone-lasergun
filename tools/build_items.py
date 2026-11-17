@@ -12,10 +12,10 @@ PACK = "Laser Gun"
 NAMES = {
     "rifle":   ("Laser Rifle", "A rugged military laser rifle in chipped olive paint. Instead of bullets it fires a focused beam of light "
                 "that arrives the instant you pull the trigger: no drop, no lead, no travel time. Each shot hits for 350 and has a chance to set "
-                "its target on fire. Runs on a Laser Battery of 50 shots; recharge batteries with Laser Charges. Fires about 400 shots a minute "
+                "its target on fire. Runs on ordinary batteries: load one like a magazine (R swaps in a fresh one from your pack), about 50 shots each, and recharge them with the game's chargers. Fires about 400 shots a minute "
                 "with almost no recoil, and makes a sharp electric crack you will learn to love."),
-    "battery": ("Laser Battery (50)", "Rechargeable power pack for the Laser Rifle. One full battery is 50 shots. Load it with Laser Charges like a magazine."),
-    "cell":    ("Laser Charge", "One shot's worth of stored energy for a Laser Battery. Built from spare electronics and metal."),
+    "battery": ("Laser Battery (old)", "Retired in 1.1.0: the Laser Rifle now runs on the game's own batteries. Kept so old saves still load."),
+    "cell":    ("Laser Charge (old)", "Retired in 1.1.0: the Laser Rifle now runs on the game's own batteries. Kept so old saves still load."),
 }
 
 # Fixed ids. Never change a guid after release: saves and other mods refer to it.
@@ -30,6 +30,9 @@ RID = {"cell": 751090, "battery": 751091, "rifle": 751092}
 DAMAGE = 350.0
 FIRE_RATE_RPM = 400
 BATTERY_SHOTS = 50
+# The rifle runs on the game's own batteries (feedingType 2 = Battery). The plugin re-tunes this at start-up
+# so one battery gives about BATTERY_SHOTS shots; this is only the starting value.
+BATTERY_ENERGY_PER_SEC = 1.0
 
 def base(key, mod_type, ppu, regions, size, rarity, weight, price, stack, craft, platform, out_n, repair, spawn=True, hidden=False):
     name, desc = NAMES[key]
@@ -54,10 +57,10 @@ def rifle():
     d = base("rifle", "RangedWeapon", 230, RIFLE_REGIONS, (4, 3), 0.92, 4.2, 2400.0, 0,
              [(8, 10), (29, 6), (13, 6)], 2, 1, [(8, 1)])
     d.update({
-        "feedingType": 0, "exinjectShellMode": 0, "isMechWeapon": False, "isFlareGun": False,
+        "feedingType": 2, "exinjectShellMode": 0, "isMechWeapon": False, "isFlareGun": False,
         "hp": 2000.0, "smokeParticleNumber": 4, "temperaturePerShot": 1.0, "ammoPlusOne": False,
         "ammoId": RID["cell"], "shellId": -1, "shellExinjectionForceFloat": 0.0,
-        "liquidAmmoItemID": -1, "extraLiquidAmmoItemIDAry": [], "liquidCapacity": 0.0, "batteryEnergyPerSec": 0.0,
+        "liquidAmmoItemID": -1, "extraLiquidAmmoItemIDAry": [], "liquidCapacity": 0.0, "batteryEnergyPerSec": BATTERY_ENERGY_PER_SEC,
         "isAirPowerd": False, "airPressure_redZoneSize": 0.0, "airPressure_yellowZoneSize": 0.0,
         "airPressure_greenZoneSize": 0.0, "airPressure_chargeZoneSize": 0.0, "movingPartRange": 0.0,
         "hasMainGripBaseline": True, "mainGripBaselineY": 0.09031009674072266, "handPoseVersion": 1,
@@ -72,7 +75,7 @@ def rifle():
         "moveSpeedFloat": 0.95, "damage": DAMAGE, "fireRange": 45.0, "noiseRange": 35.0,
         "bulletForce": 300.0, "bulletSpeed": 1500.0, "fireAngle": 0.6, "bulletNumber": 1,
         "fireInterval": round(60.0 / FIRE_RATE_RPM, 3), "recoilIntensity": 0.25, "reloadTime": 2.4,
-        "defaultMagazineId": RID["battery"], "magazineSize": BATTERY_SHOTS,
+        "defaultMagazineId": -1, "magazineSize": BATTERY_SHOTS,
         "weaponHandHeightOffset": -0.2847541570663452, "weaponHandOffsetRange": 0.3921833336353302,
         "leftHandOffsetRange": 0.4398137927055359, "leftHandHeightOffset": -0.0033399462699890138,
         "spriteOffset_x": 0.293729305267334, "spriteOffset_y": 0.2013387680053711,
@@ -87,13 +90,13 @@ def cell():
     # Fallback recipe uses the same game parts as the Boltgun's bolts (7 x4, 75 x2 -> 25);
     # the plugin swaps in the game's battery item if it finds one by name.
     d = base("cell", "Ammo", 2500, [("Main", (27, 27, 206, 48))], (1, 1), 0.6, 0.02, 15.0, 200,
-             [(7, 4), (75, 2)], 3, 25, [(56, 1)])
+             [(7, 4), (75, 2)], 3, 25, [(56, 1)], spawn=False, hidden=True)
     d.update({"ammoNumber": 10, "ammoBaseDamage": DAMAGE})
     return d
 
 def battery():
     d = base("battery", "Magazine", 400, [("Main", (96, 7, 67, 132))], (2, 2), 0.3, 0.9, 300.0, 0,
-             [(34, 6), (35, 3)], 2, 1, [(35, 1)])
+             [(34, 6), (35, 3)], 2, 1, [(35, 1)], spawn=False, hidden=True)
     d.update({"ammoId": RID["cell"], "magazineSize": BATTERY_SHOTS, "durabilityCostPerShot": 0.005,
               "sizeFloat": 1.2000000476837158, "magazineFit": 1,
               "magazineOffset_x": 0.012888908386230469, "magazineOffset_y": -0.12591969966888428})
