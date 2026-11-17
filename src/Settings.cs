@@ -18,7 +18,7 @@ namespace LaserGun
         internal static ConfigEntry<int> BatteryItemId, ShotsPerBattery, PackCapacity;
         internal static ConfigEntry<RangedWeaponType> WeaponType;
         internal static ConfigEntry<bool> ShowPack;
-        internal static ConfigEntry<float> EnergyPerShot;
+        internal static ConfigEntry<float> EnergyPerShot, FireRate, TrailLinger;
         internal static ConfigEntry<float> EnergyPerSecond;
         internal static ConfigEntry<bool> VerboseLog;
 
@@ -39,6 +39,8 @@ namespace LaserGun
             ShotsPerBattery = c.Bind("Battery", "ShotsPerBattery", 50, new ConfigDescription("Shots from one full reference battery.", new AcceptableValueRange<int>(1, 1000)));
             EnergyPerSecond = c.Bind("Battery", "EnergyPerSecond", 0f, new ConfigDescription("Override: battery energy (Wh) used per second of firing. 0 = work it out from ShotsPerBattery.", R(0, 10000)));
 
+            FireRate = c.Bind("Laser", "FireRate", 200f, new ConfigDescription("Shots per minute. Applies at once.", R(10, 1200)));
+            FireRate.SettingChanged += (_, __) => Power.ApplyFireRate();
             Damage = c.Bind("Laser", "Damage", 350f, new ConfigDescription("Damage per shot. 0 keeps the weapon's own damage.", R(0, 20000)));
             BeamSpeed = c.Bind("Laser", "BeamSpeed", 1500f, new ConfigDescription("Speed (m/s) of the shot. Light is instant; this is fast enough to look instant on screen.", R(50, 5000)));
             IgniteChance = c.Bind("Fire", "IgniteChance", 0.15f, new ConfigDescription("Chance (0-1) that a hit sets the target on fire.", R(0, 1)));
@@ -47,6 +49,7 @@ namespace LaserGun
             IgniteGroundWithTarget = c.Bind("Fire", "IgniteGroundToo", false, "When a target catches fire, also light the ground under it (can spread through grass).");
 
             ShowPack = c.Bind("Visuals", "ShowBatteryPack", true, "Draw the battery pack under the rifle while a charged battery is loaded.");
+            TrailLinger = c.Bind("Visuals", "TrailLinger", 1.2f, new ConfigDescription("Seconds a glowing trail hangs in the air along each shot's path before it fades out. 0 = off.", R(0, 10)));
             Beam = c.Bind("Visuals", "Beam", true, "Draw a bright laser beam behind each shot.");
             BeamWidth = c.Bind("Visuals", "BeamWidth", 0.05f, new ConfigDescription("Width (m) of the beam.", R(0.005f, 0.5f)));
             BeamFade = c.Bind("Visuals", "BeamFade", 0.07f, new ConfigDescription("Seconds the beam stays on screen.", R(0.01f, 1)));

@@ -9,7 +9,9 @@ namespace LaserGun
     // as a beam. The trails are not children of the bullet, so they fade out on their own after it is gone.
     internal static class Beam
     {
-        sealed class Shot { public BasicBullet B; public GameObject Core, Glow; public float Born; }
+        sealed class Shot { public BasicBullet B; public GameObject Core, Glow; public float Born; public Vector3 Start, Last; public int Layer, Order; }
+        sealed class Linger { public GameObject Go; public LineRenderer Core, Glow; public float Born, Life; public Color C; }
+        static readonly List<Linger> _lingers = new List<Linger>();
         static readonly List<Shot> _shots = new List<Shot>();
         static readonly HashSet<IntPtr> _tracked = new HashSet<IntPtr>();
         static Material _mat;
@@ -44,7 +46,8 @@ namespace LaserGun
             Vector3 p = b.transform.position;
             Color c = Colour();
             float w = Settings.BeamWidth.Value, t = Settings.BeamFade.Value;
-            var s = new Shot { B = b, Born = Time.time };
+            var s = new Shot { B = b, Born = Time.time, Start = p, Last = p, Layer = layer, Order = order };
+            try { var sp = b.startPos; if (sp != Vector3.zero) { sp.z = p.z; s.Start = sp; } } catch { }
             s.Glow = Make("LaserGun.Glow", p, mat, layer, order + 1, t, w * 2.4f, new Color(c.r, c.g, c.b, 0.55f), new Color(c.r, c.g, c.b, 0f));
             s.Core = Make("LaserGun.Core", p, mat, layer, order + 2, t * 0.8f, w, Color.Lerp(c, Color.white, 0.75f), new Color(c.r, c.g, c.b, 0f));
             _shots.Add(s);
@@ -89,11 +92,63 @@ namespace LaserGun
 
         static void Move(Shot s, Vector3 p)
         {
+            s.Last = p;
             try { if (s.Core != null) s.Core.transform.position = p; if (s.Glow != null) s.Glow.transform.position = p; } catch { }
+        }
+
+        // The lingering trail: a soft line along the whole shot path that hangs in the air and fades out.
+        static void LeaveTrail(Shot s)
+        {
+            float life = Settings.TrailLinger.Value;
+            if (life <= 0.01f || _mat == null || !Settings.Beam.Value) return;
+            if ((s.Last - s.Start).sqrMagnitude < 0.04f) return;
+            if (_lingers.Count > 60) return;
+            var go = new GameObject("LaserGun.Trail");
+            var l = new Linger { Go = go, Born = Time.time, Life = life, C = Colour() };
+            float w = Settings.BeamWidth.Value;
+            l.Glow = Line(go, s, w * 3.2f, s.Order);
+            var core = new GameObject("Core"); core.transform.SetParent(go.transform, false);
+            l.Core = Line(core, s, w * 0.9f, s.Order + 1);
+            Paint(l, 0f);
+            _lingers.Add(l);
+        }
+
+        static LineRenderer Line(GameObject go, Shot s, float width, int order)
+        {
+            var lr = go.AddComponent<LineRenderer>();
+            lr.sharedMaterial = _mat;
+            lr.useWorldSpace = true;
+            lr.positionCount = 2;
+            lr.SetPosition(0, s.Start); lr.SetPosition(1, s.Last);
+            lr.widthMultiplier = width;
+            lr.numCapVertices = 2;
+            lr.sortingLayerID = s.Layer;
+            lr.sortingOrder = order;
+            return lr;
+        }
+
+        static void Paint(Linger l, float k)
+        {
+            // k: 0 fresh .. 1 gone. The hot core cools quickly; the coloured glow hangs on and thins out.
+            float glow = 0.45f * (1f - k) * (1f - k), core = 0.8f * Mathf.Clamp01(1f - k * 2.5f);
+            var g = new Color(l.C.r, l.C.g, l.C.b, glow);
+            var c = Color.Lerp(l.C, Color.white, 0.6f); c.a = core;
+            l.Glow.startColor = new Color(g.r, g.g, g.b, glow * 0.5f); l.Glow.endColor = g;
+            l.Core.startColor = new Color(c.r, c.g, c.b, core * 0.5f); l.Core.endColor = c;
+            float w = Settings.BeamWidth.Value;
+            l.Glow.widthMultiplier = w * (3.2f + 2f * k);
         }
 
         internal static void Tick()
         {
+            for (int i = _lingers.Count - 1; i >= 0; i--)
+            {
+                var l = _lingers[i];
+                float k = (Time.time - l.Born) / l.Life;
+                bool dead = k >= 1f;
+                try { if (!dead) Paint(l, k); } catch { dead = true; }
+                if (dead) { try { if (l.Go != null) UnityEngine.Object.Destroy(l.Go); } catch { } _lingers.RemoveAt(i); }
+            }
             for (int i = _shots.Count - 1; i >= 0; i--)
             {
                 var s = _shots[i];
@@ -108,6 +163,7 @@ namespace LaserGun
         static void Release(Shot s)
         {
             try { if (s.B != null) _tracked.Remove(s.B.Pointer); } catch { }
+            try { LeaveTrail(s); } catch (Exception e) { PLog.Debug("Trail: " + e.Message); }
             float t = Settings.BeamFade.Value + 0.1f;
             try { if (s.Core != null) { s.Core.GetComponent<TrailRenderer>().emitting = false; UnityEngine.Object.Destroy(s.Core, t); } } catch { }
             try { if (s.Glow != null) { s.Glow.GetComponent<TrailRenderer>().emitting = false; UnityEngine.Object.Destroy(s.Glow, t); } } catch { }
@@ -118,6 +174,8 @@ namespace LaserGun
             foreach (var s in _shots) Release(s);
             _shots.Clear();
             _tracked.Clear();
+            foreach (var l in _lingers) { try { if (l.Go != null) UnityEngine.Object.Destroy(l.Go); } catch { } }
+            _lingers.Clear();
         }
     }
 }

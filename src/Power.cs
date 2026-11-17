@@ -107,6 +107,12 @@ namespace LaserGun
 
         // The game only drains a battery and fires from it for energy-type weapons, so the rifle is switched to the
         // configured weapon type ([Battery] WeaponType). Changing the setting in Mod Menu applies at once.
+        internal static void ApplyFireRate()
+        {
+            var g = _gun; if (g == null) return;
+            try { g.fireInterval = 60f / Math.Max(10f, Settings.FireRate.Value); } catch (Exception e) { PLog.Warn("Couldn't set the fire rate: " + e.Message); }
+        }
+
         internal static void ApplyWeaponType()
         {
             var g = _gun; if (g == null) return;
@@ -149,6 +155,7 @@ namespace LaserGun
             try { gun.feedingType = ItemAttr_RangedWeapon.FeedingType.Battery; } catch (Exception e) { PLog.Warn("Couldn't set battery feeding: " + e.Message); }
             _gun = gun;
             ApplyWeaponType();
+            ApplyFireRate();
 
             // Template: the smallest game battery the game itself lets you load into a battery weapon
             // (BasicItemUI.IsWeaponBattery); if none says yes, the smallest that isn't a vehicle battery.
