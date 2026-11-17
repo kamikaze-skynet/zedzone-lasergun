@@ -59,7 +59,7 @@ RIFLE_REGIONS = [("Main", (5, 14, 299, 118)), ("MainBody", (5, 14, 299, 118)), (
 
 def rifle():
     d = base("rifle", "RangedWeapon", 230, RIFLE_REGIONS, (6, 2), 0.92, 4.2, 2400.0, 0,
-             [(8, 10), (29, 6), (13, 6)], 2, 1, [(8, 1)])
+             [(12, 2), (13, 2), (11, 2), (62, 6)], 2, 1, [(8, 1)])  # Iron Wire, Copper Wire, Copper Tube, Metal Component
     d.update({
         "feedingType": 2, "exinjectShellMode": 0, "isMechWeapon": False, "isFlareGun": False,
         "hp": 2000.0, "smokeParticleNumber": 4, "temperaturePerShot": 1.0, "ammoPlusOne": False,
@@ -104,7 +104,7 @@ PACK_CAPACITY = 2000
 
 def battery():
     d = base("battery", "Magazine", 400, [("Main", (8, 2, 112, 140))], (2, 2), 0.3, 1.2, 600.0, 0,
-             [(34, 6), (35, 3)], 2, 1, [(35, 1)], spawn=True, hidden=False)
+             [(13, 8), (9, 3)], 2, 1, [(9, 1)], spawn=True, hidden=False)
     d.update({"ammoId": RID["cell"], "magazineSize": BATTERY_SHOTS, "durabilityCostPerShot": 0.005,
               "sizeFloat": 1.2000000476837158, "magazineFit": 1,
               "magazineOffset_x": 0.012888908386230469, "magazineOffset_y": -0.12591969966888428})
