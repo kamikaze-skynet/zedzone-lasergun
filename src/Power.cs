@@ -130,6 +130,7 @@ namespace LaserGun
                 PLog.Info("Batteries in the game: " + string.Join(", ", parts));
             }
 
+            try { Diag.ListBatteryWeapons(im); } catch (Exception e) { PLog.Debug("Battery weapon list failed: " + e.Message); }
             try { gun.feedingType = ItemAttr_RangedWeapon.FeedingType.Battery; } catch (Exception e) { PLog.Warn("Couldn't set battery feeding: " + e.Message); }
 
             // Template: the smallest game battery the game itself lets you load into a battery weapon

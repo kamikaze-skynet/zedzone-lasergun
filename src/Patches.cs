@@ -12,6 +12,7 @@ namespace LaserGun
             Patch(h, typeof(BasicBullet), nameof(BasicBullet.HitCharacter), nameof(HitCharacter_Pre), nameof(HitCharacter_Post));
             Patch(h, typeof(BasicBullet), nameof(BasicBullet.OnHit), null, nameof(OnHit_Post));
             Patch(h, typeof(ModLoader), nameof(ModLoader.LoadAll), null, nameof(LoadAll_Post));
+            Patch(h, typeof(BasicRangedWeapon), nameof(BasicRangedWeapon.CanFire), null, nameof(CanFire_Post));
             Patch(h, typeof(ZedZone.Net.NetProjectileSync), nameof(ZedZone.Net.NetProjectileSync.SpawnVisualBullet), nameof(Spawn_Pre), nameof(Spawn_Post));
         }
 
@@ -31,6 +32,11 @@ namespace LaserGun
         {
             try { Bundled.LoadMissing(); } catch (Exception e) { PLog.Error("Loading bundled items failed", e); }
             try { Power.Check(); } catch (Exception e) { PLog.Error("Battery setup failed", e); }
+        }
+
+        static void CanFire_Post(BasicRangedWeapon __instance, bool __result)
+        {
+            try { Diag.CanFire(__instance, __result); } catch (Exception e) { PLog.Debug("CanFire diag failed: " + e.Message); }
         }
 
         static void Init_Post(BasicBullet __instance)
