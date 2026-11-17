@@ -53,15 +53,15 @@ namespace LaserGun
             PackY = c.Bind("Visuals", "BatteryPackUp", 6f, new ConfigDescription("Moves the battery pack drawn on the gun up (+) or down (-), in gun-sprite pixels. Applies at once.", R(-40, 40)));
             PackSize = c.Bind("Visuals", "BatteryPackSize", 1f, new ConfigDescription("Size of the battery pack drawn on the gun (1 = normal). Applies at once.", R(0.3f, 3f)));
             PackWide = c.Bind("Visuals", "BatteryPackWidth", 1.12f, new ConfigDescription("Makes the battery pack drawn on the gun wider (above 1) or narrower (below 1) without changing its height. Applies at once.", R(0.5f, 2f)));
-            MuzzleX = c.Bind("Visuals", "BeamStartForward", -10f, new ConfigDescription("Moves where the beam starts along the barrel, in gun-sprite pixels (+ forward, - back toward the player). Applies at once.", R(-150, 60)));
-            MuzzleY = c.Bind("Visuals", "BeamStartUp", 20f, new ConfigDescription("Moves where the beam starts up (+) or down (-) on the gun, in gun-sprite pixels. Applies at once.", R(-40, 40)));
+            MuzzleX = c.Bind("Visuals", "BeamStartForward", 0f, new ConfigDescription("Moves where the beam starts along the barrel, in gun-sprite pixels (+ forward, - back toward the player). Applies at once.", R(-150, 60)));
+            MuzzleY = c.Bind("Visuals", "BeamStartUp", 0f, new ConfigDescription("Moves where the beam starts up (+) or down (-) on the gun, in gun-sprite pixels. Applies at once.", R(-40, 40)));
             TrailLinger = c.Bind("Visuals", "TrailLinger", 1.2f, new ConfigDescription("Seconds a glowing trail hangs in the air along each shot's path before it fades out. 0 = off.", R(0, 10)));
             Beam = c.Bind("Visuals", "Beam", true, "Draw a bright laser beam behind each shot.");
             BeamWidth = c.Bind("Visuals", "BeamWidth", 0.05f, new ConfigDescription("Width (m) of the beam.", R(0.005f, 0.5f)));
             BeamFade = c.Bind("Visuals", "BeamFade", 0.07f, new ConfigDescription("Seconds the beam stays on screen.", R(0.01f, 1)));
             BeamColor = c.Bind("Visuals", "BeamColor", "FF3A1E", "Beam colour as hex RRGGBB (red by default; try 3AFF5A for green or 3AA0FF for blue).");
 
-            SoundVolume = c.Bind("Sound", "Volume", 0.9f, new ConfigDescription("Volume of the laser crack. 0 = only the game's quiet shot sound.", R(0, 2)));
+            SoundVolume = c.Bind("Sound", "Volume", 1f, new ConfigDescription("Volume of the laser crack. 0 = only the game's quiet shot sound.", R(0, 2)));
             SoundFile = c.Bind("Sound", "File", "fire.wav", "WAV file played on every shot, next to LaserGun.dll (or its sound folder). Replace it with your own sound if you like.");
 
             VerboseLog = c.Bind("Debug", "VerboseLog", false, "Log every shot, hit and fire to BepInEx\\LaserGun.log.");
