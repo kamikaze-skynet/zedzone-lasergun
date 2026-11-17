@@ -44,10 +44,13 @@ namespace LaserGun
             }
             catch { }
             Vector3 p = b.transform.position;
+            // Local shots start at the tip of the barrel, not where the game spawns the bullet.
+            bool muzzle = Battery.MuzzleFrame >= Time.frameCount - 1;
+            if (muzzle) { var m = Battery.Muzzle; m.z = p.z; p = m; }
             Color c = Colour();
             float w = Settings.BeamWidth.Value, t = Settings.BeamFade.Value;
             var s = new Shot { B = b, Born = Time.time, Start = p, Last = p, Layer = layer, Order = order };
-            try { var sp = b.startPos; if (sp != Vector3.zero) { sp.z = p.z; s.Start = sp; } } catch { }
+            if (!muzzle) try { var sp = b.startPos; if (sp != Vector3.zero) { sp.z = p.z; s.Start = sp; } } catch { }
             s.Glow = Make("LaserGun.Glow", p, mat, layer, order + 1, t, w * 2.4f, new Color(c.r, c.g, c.b, 0.55f), new Color(c.r, c.g, c.b, 0f));
             s.Core = Make("LaserGun.Core", p, mat, layer, order + 2, t * 0.8f, w, Color.Lerp(c, Color.white, 0.75f), new Color(c.r, c.g, c.b, 0f));
             _shots.Add(s);

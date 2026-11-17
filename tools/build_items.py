@@ -12,7 +12,7 @@ PACK = "Laser Gun"
 NAMES = {
     "rifle":   ("Laser Rifle", "A rugged military laser rifle in chipped olive paint. Instead of bullets it fires a focused beam of light "
                 "that arrives the instant you pull the trigger: no drop, no lead, no travel time. Each shot hits for 350 and has a chance to set "
-                "its target on fire. Runs on Laser Battery Packs: load one like a magazine (R swaps in a fresh one from your pack), 40 Wh a shot so about 50 shots each, and recharge them in the game's chargers. Fires about 200 shots a minute "
+                "its target on fire. Runs on Laser Battery Packs: load one like a magazine (R swaps in a fresh one from your pack), 40 Wh a shot so about 50 shots each, and recharge them in the game's chargers. Fires about 300 shots a minute "
                 "with almost no recoil, and makes a sharp electric crack you will learn to love."),
     "battery": ("Laser Battery Pack", "A heavy rechargeable power pack for the Laser Rifle. Holds 2000 Wh; each shot uses 40 Wh, so about 50 shots. "
                 "Load it like a magazine (R swaps in a fresh one from your pack) and recharge it in the game's battery chargers."),
@@ -29,7 +29,7 @@ GUID = {
 RID = {"cell": 751090, "battery": 751091, "rifle": 751092}
 
 DAMAGE = 350.0
-FIRE_RATE_RPM = 200
+FIRE_RATE_RPM = 300
 BATTERY_SHOTS = 50
 # The rifle runs on the game's own batteries (feedingType 2 = Battery). The plugin re-tunes this at start-up
 # so one battery gives about BATTERY_SHOTS shots; this is only the starting value.
@@ -77,7 +77,7 @@ def rifle():
         "boltActionClipVolume": 1.0, "boltActionClipPitch": 1.0,
         "weaponType": 2, "weaponSlotSize": 1, "gunActionType": 0, "singleHand": False,
         "moveSpeedFloat": 0.95, "damage": DAMAGE, "fireRange": 45.0, "noiseRange": 35.0,
-        "bulletForce": 300.0, "bulletSpeed": 1500.0, "fireAngle": 0.6, "bulletNumber": 1,
+        "bulletForce": 300.0, "bulletSpeed": 1200.0, "fireAngle": 0.6, "bulletNumber": 1,
         "fireInterval": round(60.0 / FIRE_RATE_RPM, 3), "recoilIntensity": 0.25, "reloadTime": 2.4,
         "defaultMagazineId": -1, "magazineSize": BATTERY_SHOTS,
         "weaponHandHeightOffset": -0.2847541570663452, "weaponHandOffsetRange": 0.3921833336353302,

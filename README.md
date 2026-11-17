@@ -5,7 +5,7 @@ targets on fire.
 
 | Item | What it is |
 |---|---|
-| Laser Rifle | Full auto, ~200 RPM (fireInterval 0.3 s), 350 damage, 1500 m/s, recoil 0.25, spread 0.6 |
+| Laser Rifle | Full auto, ~300 RPM (fireInterval 0.2 s), 350 damage, 1200 m/s, recoil 0.25, spread 0.6 |
 | Laser Battery Pack | Rechargeable pack, 2000 energy (~50 shots). The rifle uses the game's battery feeding (feedingType 2): R swaps a pack in, firing drains it, chargers refill it |
 | Laser Charge (old) | 1.0.0 ammo, now hidden; kept so old saves load |
 

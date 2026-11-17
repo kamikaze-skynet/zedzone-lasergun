@@ -4,7 +4,7 @@
 - New Laser Battery Pack: a rechargeable battery with 2000 energy, about 50 shots. The rifle uses battery feeding:
   R swaps a pack in, firing drains it, the game's chargers refill it. Game batteries also fit (fewer shots).
 - New rifle and battery pack art. Laser Charge is retired (hidden) but still loads for old saves.
-- Fire rate is now about 200 shots a minute ([Laser] FireRate). Each shot leaves a glowing trail that lingers and fades ([Visuals] TrailLinger).
+- Fire rate is now about 300 shots a minute ([Laser] FireRate). Each shot leaves a glowing trail that lingers and fades ([Visuals] TrailLinger).
 - Each shot uses 40 Wh of the loaded battery ([Battery] EnergyPerShot); the pack is drawn on the gun while loaded.
 - New [Battery] settings: PackCapacity, ShotsPerBattery, ReferenceBatteryId, EnergyPerSecond.
 

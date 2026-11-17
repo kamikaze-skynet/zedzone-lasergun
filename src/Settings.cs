@@ -16,8 +16,8 @@ namespace LaserGun
         internal static ConfigEntry<float> SoundVolume;
         internal static ConfigEntry<string> SoundFile;
         internal static ConfigEntry<int> BatteryItemId, ShotsPerBattery, PackCapacity;
-        internal static ConfigEntry<RangedWeaponType> WeaponType;
-        internal static ConfigEntry<bool> ShowPack;
+        
+        internal static ConfigEntry<bool> ShowPack, ShowPower;
         internal static ConfigEntry<float> EnergyPerShot, FireRate, TrailLinger;
         internal static ConfigEntry<float> EnergyPerSecond;
         internal static ConfigEntry<bool> VerboseLog;
@@ -32,17 +32,17 @@ namespace LaserGun
             ExtraWeaponIds = c.Bind("General", "ExtraWeaponIds", "", "Extra item ids (comma-separated) that also fire lasers, e.g. a vanilla gun.");
             BatteryItemId = c.Bind("Battery", "ReferenceBatteryId", 0,
                 "Item id of the battery that gives exactly ShotsPerBattery shots (bigger batteries give more). 0 = the Laser Battery Pack. LaserGun.log lists every battery with its id.");
-            WeaponType = c.Bind("Battery", "WeaponMode", RangedWeaponType.Rifle, "How the game fires the rifle. Rifle fires real shots (damage, beam, fire); the game's EnergyWeapon mode drains the battery but does no damage with this gun. Applies at once.");
+            ShowPower = c.Bind("Battery", "ShowPowerOnHud", true, "Show the battery's power on the weapon HUD the way the game's own battery guns do, instead of a shot count. Turn off if the gun misbehaves. Applies at once.");
             EnergyPerShot = c.Bind("Battery", "EnergyPerShot", 40f, new ConfigDescription("Battery energy (Wh) one shot uses, taken from the loaded battery the same way the game's own battery guns drain it. A 2000 Wh Laser Battery Pack gives 2000 / this shots.", R(0.1f, 10000)));
-            WeaponType.SettingChanged += (_, __) => Power.ApplyWeaponType();
+            ShowPower.SettingChanged += (_, __) => Power.ApplyWeaponType();
             PackCapacity = c.Bind("Battery", "PackCapacity", 2000, new ConfigDescription("Energy a full Laser Battery Pack holds (same units as the game's batteries).", new AcceptableValueRange<int>(1, 100000)));
             ShotsPerBattery = c.Bind("Battery", "ShotsPerBattery", 50, new ConfigDescription("Shots from one full reference battery.", new AcceptableValueRange<int>(1, 1000)));
             EnergyPerSecond = c.Bind("Battery", "EnergyPerSecond", 0f, new ConfigDescription("Override: battery energy (Wh) used per second of firing. 0 = work it out from ShotsPerBattery.", R(0, 10000)));
 
-            FireRate = c.Bind("Laser", "FireRate", 200f, new ConfigDescription("Shots per minute. Applies at once.", R(10, 1200)));
+            FireRate = c.Bind("Laser", "FireRate", 300f, new ConfigDescription("Shots per minute. Applies at once.", R(10, 1200)));
             FireRate.SettingChanged += (_, __) => Power.ApplyFireRate();
             Damage = c.Bind("Laser", "Damage", 350f, new ConfigDescription("Damage per shot. 0 keeps the weapon's own damage.", R(0, 20000)));
-            BeamSpeed = c.Bind("Laser", "BeamSpeed", 1500f, new ConfigDescription("Speed (m/s) of the shot. Light is instant; this is fast enough to look instant on screen.", R(50, 5000)));
+            BeamSpeed = c.Bind("Laser", "BeamSpeed", 1200f, new ConfigDescription("Speed (m/s) of the shot. Light is instant; this is fast enough to look instant on screen.", R(50, 5000)));
             IgniteChance = c.Bind("Fire", "IgniteChance", 0.15f, new ConfigDescription("Chance (0-1) that a hit sets the target on fire.", R(0, 1)));
             IgniteChanceSurfaces = c.Bind("Fire", "IgniteChanceSurfaces", 0.05f, new ConfigDescription("Chance (0-1) that a shot hitting the ground, a wall or an object starts a fire there.", R(0, 1)));
 

@@ -118,7 +118,7 @@ namespace LaserGun
             var g = _gun; if (g == null) return;
             try
             {
-                var t = Settings.WeaponType.Value;
+                var t = Settings.ShowPower.Value ? RangedWeaponType.EnergyWeapon : RangedWeaponType.Rifle;
                 if (g.weaponType != t) { PLog.Info($"Power: Laser Rifle weapon type {g.weaponType} -> {t}"); g.weaponType = t; }
             }
             catch (Exception e) { PLog.Warn("Couldn't set the weapon type: " + e.Message); }

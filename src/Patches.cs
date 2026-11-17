@@ -43,7 +43,19 @@ namespace LaserGun
 
         static bool _diagWarned;
         static void FireDown_Pre(BasicRangedWeapon __instance) { try { Diag.Event(__instance, "fire button down"); } catch { } }
-        static void FireEnergy_Pre(BasicRangedWeapon __instance) { try { Diag.Event(__instance, "Fire_EnergyWeapon"); } catch { } }
+        // With the power HUD on, the game treats the rifle as an energy weapon, whose own fire code does no damage
+        // with this gun. Fire a normal shot instead.
+        static bool FireEnergy_Pre(BasicRangedWeapon __instance)
+        {
+            try
+            {
+                if (!Battery.IsMine(__instance)) return true;
+                Diag.Event(__instance, "Fire_EnergyWeapon -> shot");
+                __instance.Fire_Cartridge(1f);
+                return false;
+            }
+            catch (Exception e) { PLog.Warn("Energy fire redirect failed: " + e.Message); return true; }
+        }
         // Fire_Cartridge can be reached without Fire(); hold it to the same pause and count the shot there if so.
         static bool FireCartridge_Pre(BasicRangedWeapon __instance, out float __state)
         {

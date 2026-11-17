@@ -39,8 +39,10 @@ namespace LaserGun
     {
         public LaserHost(IntPtr ptr) : base(ptr) { }
 
+        static bool _warned;
         void LateUpdate()
         {
+            try { Battery.Frame(); } catch (Exception e) { if (!_warned) { _warned = true; PLog.Warn("Battery frame failed: " + e); } }
             try { Beam.Tick(); }
             catch (Exception e) { PLog.Error("Beam update failed", e); Beam.Clear(); }
         }

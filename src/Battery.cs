@@ -19,6 +19,8 @@ namespace LaserGun
         const int IdSlot = 1, EnergySlot = 2, AmmoSlot = 3;
         static float _lastShot = -10f;
 
+        internal static bool IsMine(BasicRangedWeapon w) => Settings.Enabled.Value && Mine(w);
+
         static bool Mine(BasicRangedWeapon w)
         {
             var a = w?.weaponAttr;
@@ -72,7 +74,36 @@ namespace LaserGun
         }
 
         // Fire prefix/postfix: one shot = EnergyPerShot Wh.
-        static bool Ready() => UnityEngine.Time.time - _lastShot >= 60f / Math.Max(1f, Settings.FireRate.Value);
+        // ---- the local player's rifle, checked every frame (LaserHost.LateUpdate)
+        static IntPtr _heldPtr; static float _heldId = -1f, _heldEnergy = -1f;
+        static float _reloadStart = -10f, _reloadEnd = -10f; static bool _reloadEndSound;
+        const float SwapTime = 0.9f;
+        internal static Vector3 Muzzle; internal static int MuzzleFrame = -1;
+
+        internal static void Frame()
+        {
+            var gc = GameController.instance; if (gc == null) return;
+            var pc = gc.playerCharacter; if (pc == null) return;
+            var w = pc.rangedWeapon;
+            if (w == null || !Mine(w)) { _heldPtr = IntPtr.Zero; return; }
+            var d = w.weaponData; var p = Props(d); if (p == null) return;
+            if (d.Pointer != _heldPtr) { _heldPtr = d.Pointer; _heldId = p[IdSlot]; _heldEnergy = p[EnergySlot]; }
+            else if (p[IdSlot] >= 1f && (_heldId < 1f || p[EnergySlot] > _heldEnergy + 1f))
+            {
+                // a battery just went in: short swap pause with the reload sounds, pack pops in at the end
+                _reloadStart = Time.time; _reloadEnd = Time.time + SwapTime; _reloadEndSound = true;
+                try { w.PlayReloadStartSoundOnly(); } catch { }
+                PLog.Info($"Battery loaded: item {p[IdSlot]:0}, {p[EnergySlot]:0.#} Wh");
+            }
+            _heldId = p[IdSlot]; _heldEnergy = p[EnergySlot];
+            if (_reloadEndSound && Time.time >= _reloadEnd) { _reloadEndSound = false; try { w.PlayReloadFinishSoundOnly(); } catch { } }
+            Sync(d);
+            Draw(w);
+        }
+
+        static bool Swapping => Time.time < _reloadEnd;
+
+        static bool Ready() => !Swapping && UnityEngine.Time.time - _lastShot >= 60f / Math.Max(1f, Settings.FireRate.Value);
 
         // Fire prefix: false skips a shot that comes before the pause is over or with no energy left.
         internal static bool Allow(BasicRangedWeapon w)
@@ -85,6 +116,7 @@ namespace LaserGun
         {
             if (!Mine(w)) return -1f;
             _lastShot = UnityEngine.Time.time;
+            try { var gp = w.gunPoint; if (gp != null) { Muzzle = gp.position; MuzzleFrame = Time.frameCount; } } catch { }
             var d = w.weaponData;
             return HasBattery(d) ? Energy(d) : -1f;
         }
@@ -104,7 +136,7 @@ namespace LaserGun
         static bool _spriteFailed;
         const string ChildName = "LaserGun_Pack";
         // Where the pack sits, in rifle sprite pixels from the sprite's centre (ppu 230): under the body, at the slot.
-        static readonly Vector2 PackCentrePx = new Vector2(-38.5f, -36f);
+        static readonly Vector2 PackCentrePx = new Vector2(-38.5f, -38f);
         const float PackWidthPx = 26f;
 
         static Sprite PackSprite()
@@ -137,7 +169,7 @@ namespace LaserGun
             SpriteRenderer sr = t != null ? t.GetComponent<SpriteRenderer>() : null;
             var wd = w.weaponData;
             Sync(wd);
-            bool loaded = HasBattery(wd) && !w.isReloading;
+            bool loaded = HasBattery(wd) && !w.isReloading && !(Swapping && wd.Pointer == _heldPtr);
             if (sr == null)
             {
                 if (!loaded) return;
@@ -146,11 +178,13 @@ namespace LaserGun
                 go.transform.SetParent(body.transform, false);
                 sr = go.AddComponent<SpriteRenderer>();
                 sr.sprite = sp;
+                try { sr.sharedMaterial = body.sharedMaterial; } catch { }
+                PLog.Info($"Pack sprite added to the rifle (layer {body.sortingLayerName}, order {body.sortingOrder + 1}, body scale {body.transform.lossyScale.x:0.##})");
             }
             sr.enabled = loaded && body.enabled;
             if (!sr.enabled) return;
             sr.sortingLayerID = body.sortingLayerID;
-            sr.sortingOrder = body.sortingOrder - 1;
+            sr.sortingOrder = body.sortingOrder + 1;
             sr.flipX = body.flipX; sr.flipY = body.flipY;
             sr.color = body.color;
             var c = PackCentrePx / 230f;
