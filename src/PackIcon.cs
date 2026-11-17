@@ -28,8 +28,37 @@ namespace LaserGun
             catch (Exception e) { Warn(e); }
         }
 
+        static float _nextScan;
+        static bool _diag;
+
+        // The game fills item pictures in from a background task that does not go through the refresh calls,
+        // so open item slots are also looked over once a second.
+        static void Scan()
+        {
+            if (Time.unscaledTime < _nextScan) return;
+            _nextScan = Time.unscaledTime + 1f;
+            var all = UnityEngine.Object.FindObjectsOfType<BasicItemUI>();
+            if (all == null) return;
+            for (int k = 0; k < all.Length; k++)
+            {
+                var ui = all[k]; if (ui == null) continue;
+                var d = ui.itemdata;
+                if (d == null || !Weapons.IsLaser(d.itemId)) continue;
+                bool known = false;
+                for (int i = 0; i < _tracked.Count; i++) if (_tracked[i].Pointer == ui.Pointer) { known = true; break; }
+                if (!known) _tracked.Add(ui);
+                if (!_diag)
+                {
+                    _diag = true;
+                    var ic = ui.iconImage;
+                    PLog.Info($"Inventory slot with the rifle found ({(known ? "refresh" : "scan")}): icon {(ic == null ? "none" : ic.gameObject.name)} enabled {ic != null && ic.enabled} sprite {(ic == null || ic.sprite == null ? "none" : ic.sprite.name)} parent {(ic == null || ic.transform.parent == null ? "none" : ic.transform.parent.name)} battery {Battery.HasBattery(d)}");
+                }
+            }
+        }
+
         internal static void Tick()
         {
+            try { Scan(); } catch (Exception e) { Warn(e); }
             for (int i = _tracked.Count - 1; i >= 0; i--)
             {
                 try
@@ -55,7 +84,7 @@ namespace LaserGun
             var ht = parent.Find(HolderName);
             var d = ui.itemdata;
             bool mine = d != null && Weapons.IsLaser(d.itemId);
-            bool show = mine && Settings.ShowPack.Value && Battery.HasBattery(d) && icon.enabled && icon.sprite != null;
+            bool show = mine && Settings.ShowPack.Value && Battery.HasBattery(d) && icon.enabled;
             if (!show)
             {
                 if (ht != null && ht.gameObject.activeSelf) ht.gameObject.SetActive(false);
@@ -93,7 +122,7 @@ namespace LaserGun
             holder.localRotation = iconRt.localRotation; holder.localScale = iconRt.localScale;
 
             // how big the gun is drawn inside that box
-            var r = iconRt.rect; var gs = icon.sprite.rect;
+            var r = iconRt.rect; var gs = icon.sprite != null ? icon.sprite.rect : new Rect(0, 0, 299, 118);
             float w = Mathf.Abs(r.width), h = Mathf.Abs(r.height);
             if (icon.preserveAspect && gs.height > 0.5f && h > 0.5f)
             {
