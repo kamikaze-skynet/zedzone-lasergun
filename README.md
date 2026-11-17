@@ -5,7 +5,7 @@ targets on fire.
 
 | Item | What it is |
 |---|---|
-| Laser Rifle | Full auto, ~300 RPM (fireInterval 0.2 s), 350 damage, 1200 m/s, recoil 0.25, spread 0.6 |
+| Laser Rifle | Full auto, ~300 RPM (fireInterval 0.2 s), 400 damage, 1200 m/s, recoil 0.25, spread 0.6 |
 | Laser Battery Pack | Rechargeable pack, 2000 energy (~50 shots). The rifle uses the game's battery feeding (feedingType 2): R swaps a pack in, firing drains it, chargers refill it |
 | Laser Charge (old) | 1.0.0 ammo, now hidden; kept so old saves load |
 
@@ -42,3 +42,10 @@ To ship only original audio, set `[Sound] File = fire-original.wav` or replace `
 The rifle sprite is made from the reference picture the mod author supplied (`art-src/laser-rifle-reference-3.png`), cut out from its white background (`tools/make_rifle_from_reference.py`). The battery pack sprite is also from the author's art (`art-src/laser-battery-pack-reference.png`, `tools/make_battery_from_reference.py`); the old charge sprite is original (`tools/make_art.py`).
 The rifle uses the Boltgun rifle's canvas, sprite regions and hand/muzzle/magazine offsets so it sits
 in the hands the same way.
+
+## Crafting
+
+- Laser Rifle: 2 Iron Wire, 2 Copper Wire, 2 Copper Tubes, 6 Metal Components
+- Laser Battery Pack: 8 Copper Wire, 3 Copper Plates
+
+The plugin looks the ingredients up by name in the game's item list at start-up. Change them in Mod Menu (F11) under Laser Gun > Crafting, or in the config's [Crafting] section (names or item ids, `Name xCount`, comma-separated).

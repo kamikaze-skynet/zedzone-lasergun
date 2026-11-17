@@ -47,6 +47,7 @@ namespace LaserGun
         {
             try { Bundled.LoadMissing(); } catch (Exception e) { PLog.Error("Loading bundled items failed", e); }
             try { Power.Check(); } catch (Exception e) { PLog.Error("Battery setup failed", e); }
+            try { Crafting.Apply(); } catch (Exception e) { PLog.Error("Crafting recipes failed", e); }
         }
 
         static bool _diagWarned;

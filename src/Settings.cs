@@ -21,6 +21,7 @@ namespace LaserGun
         internal static ConfigEntry<float> EnergyPerShot, FireRate, TrailLinger, MuzzleX, MuzzleY, PackX, PackY, PackSize, PackWide;
         internal static ConfigEntry<float> EnergyPerSecond;
         internal static ConfigEntry<bool> VerboseLog;
+        internal static ConfigEntry<string> RifleRecipe, PackRecipe;
 
         static AcceptableValueRange<float> R(float a, float b) => new AcceptableValueRange<float>(a, b);
 
@@ -41,7 +42,7 @@ namespace LaserGun
 
             FireRate = c.Bind("Laser", "FireRate", 300f, new ConfigDescription("Shots per minute. Applies at once.", R(10, 1200)));
             FireRate.SettingChanged += (_, __) => Power.ApplyFireRate();
-            Damage = c.Bind("Laser", "Damage", 350f, new ConfigDescription("Damage per shot. 0 keeps the weapon's own damage.", R(0, 20000)));
+            Damage = c.Bind("Laser", "Damage", 400f, new ConfigDescription("Damage per shot. 0 keeps the weapon's own damage.", R(0, 20000)));
             BeamSpeed = c.Bind("Laser", "BeamSpeed", 1200f, new ConfigDescription("Speed (m/s) of the shot. Light is instant; this is fast enough to look instant on screen.", R(50, 5000)));
             IgniteChance = c.Bind("Fire", "IgniteChance", 0.15f, new ConfigDescription("Chance (0-1) that a hit sets the target on fire.", R(0, 1)));
             IgniteChanceSurfaces = c.Bind("Fire", "IgniteChanceSurfaces", 0.05f, new ConfigDescription("Chance (0-1) that a shot hitting the ground, a wall or an object starts a fire there.", R(0, 1)));
@@ -64,6 +65,11 @@ namespace LaserGun
             SoundVolume = c.Bind("Sound", "Volume", 1f, new ConfigDescription("Volume of the laser crack. 0 = only the game's quiet shot sound.", R(0, 2)));
             SoundFile = c.Bind("Sound", "File", "fire.wav", "WAV file played on every shot, next to LaserGun.dll (or its sound folder). Replace it with your own sound if you like.");
 
+            RifleRecipe = c.Bind("Crafting", "LaserRifle", "Iron Wire x2, Copper Wire x2, Copper Tube x2, Metal Components x6",
+                "What crafting a Laser Rifle takes: item names as the game shows them (or item ids), each with xCount, comma-separated. Applies on the next start.");
+            PackRecipe = c.Bind("Crafting", "LaserBatteryPack", "Copper Wire x8, Copper Plate x3",
+                "What crafting a Laser Battery Pack takes, same format. Applies on the next start.");
+
             VerboseLog = c.Bind("Debug", "VerboseLog", false, "Log every shot, hit and fire to BepInEx\\LaserGun.log.");
 
             ResetToNewDefaults(c);
@@ -72,7 +78,7 @@ namespace LaserGun
         // BepInEx keeps each player's own .cfg, so a changed default never reaches anyone who already has the file.
         // Bump this number whenever the defaults change: on first start with the new version, every setting is put
         // back to the mod's default once (players can change them again afterwards in Mod Menu).
-        const int DefaultsVersion = 2;
+        const int DefaultsVersion = 3;
 
         static void ResetToNewDefaults(ConfigFile c)
         {

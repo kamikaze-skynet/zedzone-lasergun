@@ -54,7 +54,7 @@ def main():
     out.alpha_composite(beam.filter(ImageFilter.GaussianBlur(1.2))); out.alpha_composite(gun, (ox, oy))
     f = ImageFont.truetype("DejaVuSans-Bold.ttf", 54); f2 = ImageFont.truetype("DejaVuSans-Bold.ttf", 22); g = ImageDraw.Draw(out)
     g.text((W // 2, 70), "LASER GUN", font=f, fill=(255, 92, 60, 255), anchor="mm", stroke_width=3, stroke_fill=(15, 15, 15, 255))
-    g.text((W // 2, 420), "350 damage  |  2000-energy packs", font=f2, fill=(220, 226, 200, 255), anchor="mm", stroke_width=2, stroke_fill=(15, 15, 15, 255))
+    g.text((W // 2, 420), "400 damage  |  2000-energy packs", font=f2, fill=(220, 226, 200, 255), anchor="mm", stroke_width=2, stroke_fill=(15, 15, 15, 255))
     g.text((W // 2, 452), "sets targets on fire", font=f2, fill=(220, 226, 200, 255), anchor="mm", stroke_width=2, stroke_fill=(15, 15, 15, 255))
     out.convert("RGB").save(os.path.join(REPO, "workshop", "preview.png"))
     # also a check render of the in-game sprite with the pack (4x)

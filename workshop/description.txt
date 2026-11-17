@@ -2,14 +2,20 @@ A military laser rifle for ZED ZONE.
 
 [b]Adds[/b]
 [list]
-[*] Laser Rifle - full-auto laser, about 300 shots a minute, 350 damage per shot
+[*] Laser Rifle - full-auto laser, about 300 shots a minute, 400 damage per shot
 [/list]
 [b]Runs on Laser Battery Packs.[/b] Each pack holds 2000 energy, about 50 shots. Press R to swap a fresh pack from your inventory into the rifle, and recharge empty packs in the game's battery chargers. Packs turn up in the world and can be crafted.
 The rifle can be crafted and turns up rarely in buildings.
 
+[b]Crafting[/b]
+[list]
+[*] Laser Rifle: 2 Iron Wire, 2 Copper Wire, 2 Copper Tubes, 6 Metal Components
+[*] Laser Battery Pack: 8 Copper Wire, 3 Copper Plates
+[/list]
+
 [b]How it fights[/b]
 [list]
-[*] The shot travels at 1500 m/s, so it lands the moment you pull the trigger
+[*] The shot travels at 1200 m/s, so it lands the moment you pull the trigger
 [*] A bright red beam flashes from the emitter to the target
 [*] Every hit has a 15% chance to set the target on fire (uses the game's own burning, so water and dodging put it out)
 [*] Shots that hit grass or wood have a small chance to start a fire there

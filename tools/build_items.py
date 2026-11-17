@@ -11,7 +11,7 @@ CONTENT = os.path.join(REPO, "workshop", "content")
 PACK = "Laser Gun"
 NAMES = {
     "rifle":   ("Laser Rifle", "A rugged military laser rifle in chipped olive paint. Instead of bullets it fires a focused beam of light "
-                "that arrives the instant you pull the trigger: no drop, no lead, no travel time. Each shot hits for 350 and has a chance to set "
+                "that arrives the instant you pull the trigger: no drop, no lead, no travel time. Each shot hits for 400 and has a chance to set "
                 "its target on fire. Runs on Laser Battery Packs: load one like a magazine (R swaps in a fresh one from your pack), 40 Wh a shot so about 50 shots each, and recharge them in the game's chargers. Fires about 300 shots a minute "
                 "with almost no recoil, and makes a sharp electric crack you will learn to love."),
     "battery": ("Laser Battery Pack", "A heavy rechargeable power pack for the Laser Rifle. Holds 2000 Wh; each shot uses 40 Wh, so about 50 shots. "
@@ -28,7 +28,7 @@ GUID = {
 # Requested runtime ids (Boltgun uses 751075-751080); the game's loader remaps them if they clash.
 RID = {"cell": 751090, "battery": 751091, "rifle": 751092}
 
-DAMAGE = 350.0
+DAMAGE = 400.0
 FIRE_RATE_RPM = 300
 BATTERY_SHOTS = 50
 # The rifle runs on the game's own batteries (feedingType 2 = Battery). The plugin re-tunes this at start-up
