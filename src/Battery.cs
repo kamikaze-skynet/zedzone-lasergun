@@ -17,6 +17,7 @@ namespace LaserGun
         // Their beam code drains [2] over time. The rifle fires single shots instead, so each shot takes
         // EnergyPerShot Wh from [2], and [3] is kept at "shots left" so the game's normal firing code runs.
         const int IdSlot = 1, EnergySlot = 2, AmmoSlot = 3;
+        static float _lastShot = -10f;
 
         static bool Mine(BasicRangedWeapon w)
         {
@@ -64,6 +65,9 @@ namespace LaserGun
             var d = w.weaponData;
             Sync(d);
             if (result || w.isReloading) return;
+            // The game's own CanFire also enforces the pause between shots; never override that.
+            float interval = 60f / Math.Max(10f, Settings.FireRate.Value);
+            if (UnityEngine.Time.time - _lastShot < interval) return;
             if (ShotsLeft(Energy(d)) >= 1) result = true;
         }
 
@@ -71,6 +75,7 @@ namespace LaserGun
         internal static float Before(BasicRangedWeapon w)
         {
             if (!Mine(w)) return -1f;
+            _lastShot = UnityEngine.Time.time;
             var d = w.weaponData;
             return HasBattery(d) ? Energy(d) : -1f;
         }
