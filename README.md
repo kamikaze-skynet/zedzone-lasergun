@@ -39,6 +39,6 @@ To ship only original audio, set `[Sound] File = fire-original.wav` or replace `
 
 ## Art
 
-All sprites are original, drawn by `tools/make_art.py` (no third-party art or insignia).
+The rifle sprite is made from the reference picture the mod author supplied (`art-src/`), flipped to face right with its insignia and lettering painted out (`tools/make_rifle_from_reference.py`). The battery/charge sprites are original (`tools/make_art.py`).
 The rifle uses the Boltgun rifle's canvas, sprite regions and hand/muzzle/magazine offsets so it sits
 in the hands the same way.

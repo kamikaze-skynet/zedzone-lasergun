@@ -294,10 +294,9 @@ def save(kind, key, img):
 
 def main():
     r = rifle(); b = battery(); c = cell()
-    save("RangedWeapons", "rifle", r)
+    # rifle sprite now comes from tools/make_rifle_from_reference.py
     save("Magazine", "battery", b)
     save("Ammo", "cell", c)
-    workshop_preview(r, b).save(os.path.join(HERE, "..", "workshop", "preview.png"))
     print("art written")
 
 
