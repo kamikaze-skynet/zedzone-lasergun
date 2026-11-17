@@ -4,7 +4,7 @@ A military laser rifle for ZED ZONE.
 [list]
 [*] Laser Rifle - full-auto laser, about 400 shots a minute, 350 damage per shot
 [/list]
-[b]Runs on the game's own batteries.[/b] Press R to swap a battery from your pack into the rifle. One small battery gives about 50 shots (bigger batteries last longer), and you recharge them with the game's chargers.
+[b]Runs on Laser Battery Packs.[/b] Each pack holds 2000 energy, about 50 shots. Press R to swap a fresh pack from your inventory into the rifle, and recharge empty packs in the game's battery chargers. Packs turn up in the world and can be crafted.
 The rifle can be crafted and turns up rarely in buildings.
 
 [b]How it fights[/b]

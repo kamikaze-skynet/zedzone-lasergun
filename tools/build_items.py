@@ -14,7 +14,8 @@ NAMES = {
                 "that arrives the instant you pull the trigger: no drop, no lead, no travel time. Each shot hits for 350 and has a chance to set "
                 "its target on fire. Runs on ordinary batteries: load one like a magazine (R swaps in a fresh one from your pack), about 50 shots each, and recharge them with the game's chargers. Fires about 400 shots a minute "
                 "with almost no recoil, and makes a sharp electric crack you will learn to love."),
-    "battery": ("Laser Battery (old)", "Retired in 1.1.0: the Laser Rifle now runs on the game's own batteries. Kept so old saves still load."),
+    "battery": ("Laser Battery Pack", "A heavy rechargeable power pack for the Laser Rifle. Holds 2000 energy, about 50 shots. "
+                "Load it like a magazine (R swaps in a fresh one from your pack) and recharge it in the game's battery chargers."),
     "cell":    ("Laser Charge (old)", "Retired in 1.1.0: the Laser Rifle now runs on the game's own batteries. Kept so old saves still load."),
 }
 
@@ -97,9 +98,13 @@ def cell():
     d.update({"ammoNumber": 10, "ammoBaseDamage": DAMAGE})
     return d
 
+# Laser Battery Pack: shipped as a Magazine item for its sprite/name/recipe; at start-up the plugin (Power.cs)
+# gives it the game's battery feature with PACK_CAPACITY energy, so the rifle loads it and chargers charge it.
+PACK_CAPACITY = 2000
+
 def battery():
-    d = base("battery", "Magazine", 400, [("Main", (96, 7, 67, 132))], (2, 2), 0.3, 0.9, 300.0, 0,
-             [(34, 6), (35, 3)], 2, 1, [(35, 1)], spawn=False, hidden=True)
+    d = base("battery", "Magazine", 400, [("Main", (8, 2, 112, 140))], (2, 2), 0.3, 1.2, 600.0, 0,
+             [(34, 6), (35, 3)], 2, 1, [(35, 1)], spawn=True, hidden=False)
     d.update({"ammoId": RID["cell"], "magazineSize": BATTERY_SHOTS, "durabilityCostPerShot": 0.005,
               "sizeFloat": 1.2000000476837158, "magazineFit": 1,
               "magazineOffset_x": 0.012888908386230469, "magazineOffset_y": -0.12591969966888428})

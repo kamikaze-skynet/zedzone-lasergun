@@ -7,10 +7,12 @@ namespace LaserGun
     // The Laser Rifle runs on the game's own batteries (weapon feedingType = Battery): R swaps in a
     // battery from your pack, the shots drain it, and it is recharged with the game's chargers.
     // The game drains batteryEnergyPerSec (Wh) for every second of firing, so after the mod loader
-    // runs this sets it so one reference battery gives about [Battery] ShotsPerBattery shots.
+    // runs this sets it so one full Laser Battery Pack gives about [Battery] ShotsPerBattery shots. The pack is
+    // a Magazine item in the .zedmod; MakeBattery turns it into a real game battery with PackCapacity energy.
     internal static class Power
     {
         const string RifleGuid = "93b81951-6391-4707-beb4-0ea971889dc7";
+        const string PackGuid = "cef9bff0-579f-401b-a5a2-890dc6fd3ec8";
 
         internal static int IdOf(string guid)
         {
@@ -44,6 +46,52 @@ namespace LaserGun
             catch { return 0f; }
         }
 
+        static readonly System.Text.RegularExpressions.Regex Num = new(@"[0-9]+(\.[0-9]+)?");
+
+        // Gives `pack` the template battery's item type and features, with its own battery feature holding `capacity`.
+        static float MakeBattery(ItemAttr pack, ItemAttr tmpl, int capacity)
+        {
+            var src = tmpl.GetItemFeatureByFeatureType(ItemFeatureType.Battery)?.TryCast<ItemFeature_Battery>();
+            if (src == null) return 0f;
+            var bat = UnityEngine.Object.Instantiate(src);
+            bat.hideFlags = UnityEngine.HideFlags.HideAndDontSave;
+            string old = bat.batteryCapacity ?? "";
+            bat.batteryCapacity = Num.IsMatch(old) ? Num.Replace(old, capacity.ToString(), 1) : capacity.ToString();
+
+            pack.itemType = tmpl.itemType;
+            var types = new Il2CppSystem.Collections.Generic.List<ItemFeatureType>();
+            var temp = new Il2CppSystem.Collections.Generic.List<ItemFeature>();
+            var dic = new Il2CppSystem.Collections.Generic.Dictionary<ItemFeatureType, ItemFeature>();
+            var cfgs = new Il2CppSystem.Collections.Generic.List<ItemFeatureConfigData>();
+            types.Add(ItemFeatureType.Battery); temp.Add(bat); dic[ItemFeatureType.Battery] = bat;
+            var tc = tmpl.itemFeatureConfigDatas;
+            if (tc != null)
+                for (int i = 0; i < tc.Count; i++)
+                {
+                    var c = tc[i];
+                    if (c == null || c.featureType != ItemFeatureType.Battery) continue;
+                    var n = new ItemFeatureConfigData { featureType = c.featureType, itemFeatureClassName = c.itemFeatureClassName };
+                    var fields = new Il2CppSystem.Collections.Generic.List<ItemFeatureConfigData.ItemFeatureFieldConfigData>();
+                    var fs = c.ItemFeatureFieldConfigDatas;
+                    if (fs != null)
+                        for (int j = 0; j < fs.Count; j++)
+                        {
+                            var f = fs[j]; if (f == null) continue;
+                            string v = f.itemFeatureFieldValue;
+                            if (f.itemFeatureFieldName == "batteryCapacity") v = bat.batteryCapacity;
+                            fields.Add(new ItemFeatureConfigData.ItemFeatureFieldConfigData { itemFeatureFieldName = f.itemFeatureFieldName, itemFeatureFieldValue = v });
+                        }
+                    n.ItemFeatureFieldConfigDatas = fields;
+                    cfgs.Add(n);
+                }
+            pack.itemFeatures = types;
+            pack.itemFeatureConfigDatas = cfgs;
+            pack.itemFeatureTemp = temp;
+            pack.itemFeatureDataDic = dic;
+            try { pack.InvalidateDescriptionCache(); } catch { }
+            return Capacity(pack, out _);
+        }
+
         internal static void Check()
         {
             var im = ItemManager.instance;
@@ -73,16 +121,35 @@ namespace LaserGun
 
             try { gun.feedingType = ItemAttr_RangedWeapon.FeedingType.Battery; } catch (Exception e) { PLog.Warn("Couldn't set battery feeding: " + e.Message); }
 
-            // Reference battery: the configured one, else the smallest that isn't a vehicle battery.
-            float refCap = 0f; string refName = "";
-            int want = Settings.BatteryItemId.Value;
+            // Template: the smallest game battery that isn't a vehicle battery. The Laser Battery Pack copies its
+            // battery setup (type, features, model) with PackCapacity energy, so loaders and chargers treat it as a battery.
+            int packId = IdOf(PackGuid);
+            int tmplId = -1; float tmplCap = 0f;
             foreach (var c in caps)
             {
-                if (want > 0) { if (c.id == want) { refCap = c.cap; refName = c.name; } continue; }
+                if (c.id == packId) continue;
                 string l = (c.name + " " + c.model).ToLowerInvariant();
                 if (l.Contains("car") || l.Contains("vehicle") || l.Contains("truck")) continue;
-                if (refCap <= 0f || c.cap < refCap) { refCap = c.cap; refName = c.name; }
+                if (tmplCap <= 0f || c.cap < tmplCap) { tmplCap = c.cap; tmplId = c.id; }
             }
+            float packCap = 0f;
+            var pack = packId > 0 ? im.GetItemAttrById(packId) : null;
+            var tmpl = tmplId > 0 ? im.GetItemAttrById(tmplId) : null;
+            if (pack == null) PLog.Warn("Power: the Laser Battery Pack item isn't loaded.");
+            else if (tmpl == null) PLog.Warn("Power: no game battery found to copy, so the Laser Battery Pack can't hold power.");
+            else
+            {
+                try { packCap = MakeBattery(pack, tmpl, Settings.PackCapacity.Value); }
+                catch (Exception e) { PLog.Warn("Power: couldn't make the Laser Battery Pack a battery: " + e); }
+                PLog.Info($"Power: Laser Battery Pack {packId} copies {Name(tmpl)} ({tmplId}), capacity {packCap:0.##} (type {pack.itemType})");
+            }
+
+            // Reference battery for the drain: the configured one, else the Laser Battery Pack.
+            float refCap = 0f; string refName = "";
+            int want = Settings.BatteryItemId.Value;
+            if (want > 0) { foreach (var c in caps) if (c.id == want) { refCap = c.cap; refName = c.name; } }
+            if (refCap <= 0f && packCap > 0f) { refCap = packCap; refName = "Laser Battery Pack"; }
+            if (refCap <= 0f && tmplCap > 0f) { refCap = tmplCap; refName = Name(tmpl); }
             float interval = gun.fireInterval > 0.001f ? gun.fireInterval : 0.15f;
             int shots = Math.Max(1, Settings.ShotsPerBattery.Value);
             if (Settings.EnergyPerSecond.Value > 0f) gun.batteryEnergyPerSec = Settings.EnergyPerSecond.Value;

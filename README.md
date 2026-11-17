@@ -6,8 +6,8 @@ targets on fire.
 | Item | What it is |
 |---|---|
 | Laser Rifle | Full auto, ~400 RPM (fireInterval 0.15 s), 350 damage, 1500 m/s, recoil 0.25, spread 0.6 |
-| (game batteries) | The rifle uses the game's battery feeding (feedingType 2): R swaps a battery in, firing drains it, chargers refill it |
-| Laser Battery / Laser Charge (old) | 1.0.0 items, now hidden; kept so old saves load |
+| Laser Battery Pack | Rechargeable pack, 2000 energy (~50 shots). The rifle uses the game's battery feeding (feedingType 2): R swaps a pack in, firing drains it, chargers refill it |
+| Laser Charge (old) | 1.0.0 ammo, now hidden; kept so old saves load |
 
 The plugin (`src/`, BepInEx IL2CPP, `girthy_mods.zedzone.lasergun`):
 
@@ -17,7 +17,7 @@ The plugin (`src/`, BepInEx IL2CPP, `girthy_mods.zedzone.lasergun`):
 - `Beam.cs` draws the beam (two short trails) and hides the game's bullet sprite.
 - `Sound.cs` loads `fire.wav` from the mod folder (any PCM/float WAV) and plays it at the muzzle.
 - `Remote.cs` gives other players' shots the same beam and sound.
-- `Power.cs` sets battery feeding and tunes `batteryEnergyPerSec` so the smallest battery gives `[Battery] ShotsPerBattery` shots (logs every battery's capacity).
+- `Power.cs` turns the Laser Battery Pack (a Magazine item in the .zedmod) into a real game battery by copying a game battery's features with `[Battery] PackCapacity` energy, sets battery feeding, and tunes `batteryEnergyPerSec` so one pack gives `[Battery] ShotsPerBattery` shots (logs every battery's capacity).
 - `Bundled.cs` loads `items\*.zedmod` next to the DLL (Girthy Mods / manual installs).
 
 Settings: `BepInEx\config\girthy_mods.zedzone.lasergun.cfg`, or Mod Menu (F11). Log: `BepInEx\LaserGun.log`.
@@ -39,6 +39,6 @@ To ship only original audio, set `[Sound] File = fire-original.wav` or replace `
 
 ## Art
 
-The rifle sprite is made from the reference picture the mod author supplied (`art-src/laser-rifle-reference-3.png`), cut out from its white background (`tools/make_rifle_from_reference.py`). The battery/charge sprites are original (`tools/make_art.py`).
+The rifle sprite is made from the reference picture the mod author supplied (`art-src/laser-rifle-reference-3.png`), cut out from its white background (`tools/make_rifle_from_reference.py`). The battery pack sprite is also from the author's art (`art-src/laser-battery-pack-reference.png`, `tools/make_battery_from_reference.py`); the old charge sprite is original (`tools/make_art.py`).
 The rifle uses the Boltgun rifle's canvas, sprite regions and hand/muzzle/magazine offsets so it sits
 in the hands the same way.

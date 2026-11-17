@@ -1,10 +1,10 @@
 # Changelog
 
 ## 1.1.0 (2026-11-17)
-- The Laser Rifle now runs on the game's own batteries (battery feeding): R swaps a battery in, about 50 shots
-  from the smallest battery (bigger ones last longer), recharge with the game's chargers.
-- Laser Battery and Laser Charge are retired (hidden, no longer spawn) but still load for old saves.
-- New [Battery] settings: ShotsPerBattery, ReferenceBatteryId, EnergyPerSecond.
+- New Laser Battery Pack: a rechargeable battery with 2000 energy, about 50 shots. The rifle uses battery feeding:
+  R swaps a pack in, firing drains it, the game's chargers refill it. Game batteries also fit (fewer shots).
+- New rifle and battery pack art. Laser Charge is retired (hidden) but still loads for old saves.
+- New [Battery] settings: PackCapacity, ShotsPerBattery, ReferenceBatteryId, EnergyPerSecond.
 
 ## 1.0.0 (2026-11-17)
 - First release: Laser Rifle, Laser Battery (50), Laser Charge.

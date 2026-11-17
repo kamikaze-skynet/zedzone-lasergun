@@ -295,7 +295,7 @@ def save(kind, key, img):
 def main():
     r = rifle(); b = battery(); c = cell()
     # rifle sprite now comes from tools/make_rifle_from_reference.py
-    save("Magazine", "battery", b)
+    # battery pack sprite now comes from tools/make_battery_from_reference.py
     save("Ammo", "cell", c)
     print("art written")
 
