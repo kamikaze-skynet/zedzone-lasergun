@@ -9,16 +9,20 @@ PACK_CENTRE = (154.5 - 37.75, 73 + 32)  # sprite canvas px (matches Battery.Pack
 PACK_H_W = 26                   # the pack's height is that of a 26 px wide pack...
 PACK_W = 26 * 1.12              # ...drawn 12% wider (BatteryPackWidth)
 
-def pack_cutout():
-    img = cv2.imread(os.path.join(REPO, "art-src", "laser-battery-pack-reference.png")); h, w = img.shape[:2]
+def cutout(name):
+    img = cv2.imread(os.path.join(REPO, "art-src", name)); h, w = img.shape[:2]
     white = (img.min(axis=2) > 232).astype(np.uint8)
     n, lab = cv2.connectedComponents(white); bg = np.zeros_like(white)
     for i in range(1, n):
         ys, xs = np.nonzero(lab == i)
         if ys.min() == 0 or xs.min() == 0 or ys.max() == h - 1 or xs.max() == w - 1: bg |= (lab == i).astype(np.uint8)
+        # enclosed paper-white holes (inside the trigger guard) are background too
+        elif len(ys) > 150 and np.median(img[ys, xs]) > 244: bg |= (lab == i).astype(np.uint8)
     a = cv2.GaussianBlur(((1 - bg) * 255).astype(np.float32), (0, 0), 0.7).clip(0, 255).astype(np.uint8)
     im = Image.fromarray(np.dstack([img[..., ::-1], a]), "RGBA")
     return im.crop(im.getbbox())
+
+def pack_cutout(): return cutout("laser-battery-pack-reference.png")
 
 def gun_with_pack():
     gun = Image.open(os.path.join(REPO, "art-src", "laser-rifle-clean.png"))
@@ -33,10 +37,11 @@ def gun_with_pack():
     return out
 
 def main():
-    full = gun_with_pack()
+    # The cover uses the user's own picture of the rifle with its pack fitted (art-src/laser-rifle-cover-reference.png).
+    full = cutout("laser-rifle-cover-reference.png")
     a = np.array(full)[..., 3]; xr = np.nonzero(a.max(0) > 128)[0].max()
     # the emitter face sits a little behind the tip of the slanted hood: start the beam there, mid-barrel
-    xr -= 40; ys = np.nonzero(a[:, xr - 10:xr].max(1) > 128)[0]; ys = ys[ys < a.shape[0] * 0.5]; my = (ys.min() + ys.max()) / 2
+    xr -= 60; ys = np.nonzero(a[:, xr - 10:xr].max(1) > 128)[0]; ys = ys[ys < a.shape[0] * 0.5]; my = (ys.min() + ys.max()) / 2
     W = 512; out = Image.new("RGBA", (W, W), (28, 32, 26, 255)); g = ImageDraw.Draw(out)
     for r in range(360, 0, -6):
         k = int(34 * (1 - r / 360)); g.ellipse([200 - r, 260 - r, 200 + r, 260 + r], fill=(28 + k, 32 + k, 26 + k, 255))
@@ -51,8 +56,6 @@ def main():
     g.text((W // 2, 70), "LASER GUN", font=f, fill=(255, 92, 60, 255), anchor="mm", stroke_width=3, stroke_fill=(15, 15, 15, 255))
     g.text((W // 2, 420), "350 damage  |  2000-energy packs", font=f2, fill=(220, 226, 200, 255), anchor="mm", stroke_width=2, stroke_fill=(15, 15, 15, 255))
     g.text((W // 2, 452), "sets targets on fire", font=f2, fill=(220, 226, 200, 255), anchor="mm", stroke_width=2, stroke_fill=(15, 15, 15, 255))
-    # the gun faces right, which mirrors the small lettering under the emblem: flip that strip back so it reads
-    box = (284, 236, 386, 247); out.paste(out.crop(box).transpose(Image.FLIP_LEFT_RIGHT), box)
     out.convert("RGB").save(os.path.join(REPO, "workshop", "preview.png"))
     # also a check render of the in-game sprite with the pack (4x)
     sp = Image.open(os.path.join(REPO, "items", "RangedWeapons", "rifle", "sprite.png"))
