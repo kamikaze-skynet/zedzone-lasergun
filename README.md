@@ -39,6 +39,6 @@ To ship only original audio, set `[Sound] File = fire-original.wav` or replace `
 
 ## Art
 
-The rifle sprite is made from the reference picture the mod author supplied (`art-src/laser-rifle-reference-2.png`), cut out with its emblem and lettering painted out (`tools/make_rifle_from_reference.py`). The battery/charge sprites are original (`tools/make_art.py`).
+The rifle sprite is made from the reference picture the mod author supplied (`art-src/laser-rifle-reference-3.png`), cut out with its emblem and lettering painted out (`tools/make_rifle_from_reference.py`). The battery/charge sprites are original (`tools/make_art.py`).
 The rifle uses the Boltgun rifle's canvas, sprite regions and hand/muzzle/magazine offsets so it sits
 in the hands the same way.
