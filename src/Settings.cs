@@ -16,6 +16,7 @@ namespace LaserGun
         internal static ConfigEntry<float> SoundVolume;
         internal static ConfigEntry<string> SoundFile;
         internal static ConfigEntry<int> BatteryItemId, ShotsPerBattery, PackCapacity;
+        internal static ConfigEntry<RangedWeaponType> WeaponType;
         internal static ConfigEntry<float> EnergyPerSecond;
         internal static ConfigEntry<bool> VerboseLog;
 
@@ -29,6 +30,8 @@ namespace LaserGun
             ExtraWeaponIds = c.Bind("General", "ExtraWeaponIds", "", "Extra item ids (comma-separated) that also fire lasers, e.g. a vanilla gun.");
             BatteryItemId = c.Bind("Battery", "ReferenceBatteryId", 0,
                 "Item id of the battery that gives exactly ShotsPerBattery shots (bigger batteries give more). 0 = the Laser Battery Pack. LaserGun.log lists every battery with its id.");
+            WeaponType = c.Bind("Battery", "WeaponType", RangedWeaponType.EnergyWeapon, "How the game treats the rifle. Battery-powered firing needs EnergyWeapon (or EnergyChargeWeapon); Rifle is the old cartridge behaviour. Applies at once.");
+            WeaponType.SettingChanged += (_, __) => Power.ApplyWeaponType();
             PackCapacity = c.Bind("Battery", "PackCapacity", 2000, new ConfigDescription("Energy a full Laser Battery Pack holds (same units as the game's batteries).", new AcceptableValueRange<int>(1, 100000)));
             ShotsPerBattery = c.Bind("Battery", "ShotsPerBattery", 50, new ConfigDescription("Shots from one full reference battery.", new AcceptableValueRange<int>(1, 1000)));
             EnergyPerSecond = c.Bind("Battery", "EnergyPerSecond", 0f, new ConfigDescription("Override: battery energy (Wh) used per second of firing. 0 = work it out from ShotsPerBattery.", R(0, 10000)));

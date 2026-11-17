@@ -12,6 +12,17 @@ namespace LaserGun
         static float _next;
         static bool _last = true;
 
+        static readonly Dictionary<string, float> _evNext = new Dictionary<string, float>();
+
+        internal static void Event(BasicRangedWeapon w, string what)
+        {
+            var attr = w?.weaponAttr;
+            if (attr == null || !Weapons.IsLaser(attr.itemId)) return;
+            if (_evNext.TryGetValue(what, out var t) && Time.unscaledTime < t) return;
+            _evNext[what] = Time.unscaledTime + 2f;
+            PLog.Info($"Rifle: {what} (type {attr.weaponType}, feeding {attr.feedingType})");
+        }
+
         internal static void CanFire(BasicRangedWeapon w, bool result)
         {
             if (w == null) return;
@@ -63,10 +74,13 @@ namespace LaserGun
             for (int i = 0; i < list.Count; i++)
             {
                 var g = list[i]?.TryCast<ItemAttr_RangedWeapon>();
-                if (g == null || g.feedingType != ItemAttr_RangedWeapon.FeedingType.Battery || Weapons.IsLaser(g.itemId)) continue;
-                parts.Add($"{g.itemId}={g.itemName} energy/s {g.batteryEnergyPerSec:0.###} interval {g.fireInterval:0.###} ammoId {g.ammoId} mag {g.magazineSize} action {g.gunActionType} type {g.weaponType} mech {g.isMechWeapon}");
+                if (g == null || Weapons.IsLaser(g.itemId)) continue;
+                bool energy = g.weaponType == RangedWeaponType.EnergyWeapon || g.weaponType == RangedWeaponType.EnergyChargeWeapon;
+                if (g.feedingType != ItemAttr_RangedWeapon.FeedingType.Battery && !energy) continue;
+                string n = ""; try { n = g.ItemName_EN; } catch { }
+                parts.Add($"{g.itemId}={n} feeding {g.feedingType} bullet {g.bulletPrefabName} energy/s {g.batteryEnergyPerSec:0.###} interval {g.fireInterval:0.###} ammoId {g.ammoId} mag {g.magazineSize} action {g.gunActionType} type {g.weaponType} mech {g.isMechWeapon}");
             }
-            PLog.Info("Game battery weapons: " + (parts.Count > 0 ? string.Join(" ; ", parts) : "none"));
+            PLog.Info("Game battery/energy weapons: " + (parts.Count > 0 ? string.Join(" ; ", parts) : "none"));
         }
     }
 }

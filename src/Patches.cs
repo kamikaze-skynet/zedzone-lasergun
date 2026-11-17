@@ -13,6 +13,9 @@ namespace LaserGun
             Patch(h, typeof(BasicBullet), nameof(BasicBullet.OnHit), null, nameof(OnHit_Post));
             Patch(h, typeof(ModLoader), nameof(ModLoader.LoadAll), null, nameof(LoadAll_Post));
             Patch(h, typeof(BasicRangedWeapon), nameof(BasicRangedWeapon.CanFire), null, nameof(CanFire_Post));
+            Patch(h, typeof(BasicRangedWeapon), nameof(BasicRangedWeapon.OnFireButtonDown), nameof(FireDown_Pre), null);
+            Patch(h, typeof(BasicRangedWeapon), nameof(BasicRangedWeapon.Fire_EnergyWeapon), nameof(FireEnergy_Pre), null);
+            Patch(h, typeof(BasicRangedWeapon), nameof(BasicRangedWeapon.Fire_Cartridge), nameof(FireCartridge_Pre), null);
             Patch(h, typeof(ZedZone.Net.NetProjectileSync), nameof(ZedZone.Net.NetProjectileSync.SpawnVisualBullet), nameof(Spawn_Pre), nameof(Spawn_Post));
         }
 
@@ -34,9 +37,14 @@ namespace LaserGun
             try { Power.Check(); } catch (Exception e) { PLog.Error("Battery setup failed", e); }
         }
 
+        static bool _diagWarned;
+        static void FireDown_Pre(BasicRangedWeapon __instance) { try { Diag.Event(__instance, "fire button down"); } catch { } }
+        static void FireEnergy_Pre(BasicRangedWeapon __instance) { try { Diag.Event(__instance, "Fire_EnergyWeapon"); } catch { } }
+        static void FireCartridge_Pre(BasicRangedWeapon __instance) { try { Diag.Event(__instance, "Fire_Cartridge"); } catch { } }
+
         static void CanFire_Post(BasicRangedWeapon __instance, bool __result)
         {
-            try { Diag.CanFire(__instance, __result); } catch (Exception e) { PLog.Debug("CanFire diag failed: " + e.Message); }
+            try { Diag.CanFire(__instance, __result); } catch (Exception e) { if (!_diagWarned) { _diagWarned = true; PLog.Warn("CanFire diag failed: " + e); } }
         }
 
         static void Init_Post(BasicBullet __instance)
