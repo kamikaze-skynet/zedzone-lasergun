@@ -214,7 +214,7 @@ namespace LaserGun
             bool loaded = HasBattery(wd) && !w.isReloading && !(Swapping && wd.Pointer == _heldPtr);
             // The game also draws the loaded battery itself as a "magazine", oversized and off the gun: hide that one.
             try { var gm = w.magazineSpriteRenderer; if (gm != null && gm.enabled) gm.enabled = false; } catch { }
-            if (!Local(body, PackCentrePx, out var pos, out var gunPpu)) return;
+            if (!Local(body, PackCentrePx + new Vector2(Settings.PackX.Value, Settings.PackY.Value), out var pos, out var gunPpu)) return;
             if (sr == null)
             {
                 if (!loaded) return;
@@ -233,7 +233,7 @@ namespace LaserGun
             sr.color = body.color;
             sr.transform.localPosition = pos;
             sr.transform.localRotation = Quaternion.identity;
-            sr.transform.localScale = Vector3.one;
+            float ps = Settings.PackSize.Value; sr.transform.localScale = new Vector3(ps, ps, 1f);
         }
     }
 }
