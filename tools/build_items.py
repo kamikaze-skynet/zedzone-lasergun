@@ -50,7 +50,7 @@ def base(key, mod_type, ppu, regions, size, rarity, weight, price, stack, craft,
     }
 
 # The sprite is made from the user's reference picture (tools/make_rifle_from_reference.py): a 304x144 canvas at
-# 0.27 scale with the pistol grip at (75, 99). The Main region's centre sits at the same place relative to the
+# 0.1408 scale with the pistol grip at (75, 99). The Main region's centre sits at the same place relative to the
 # grip as on the Boltgun rifle, so the Boltgun's hand offsets still line up. The muzzle is 20 px lower than the
 # Boltgun's, hence the lower gunPointOffset_y.
 RIFLE_REGIONS = [("Main", (5, 14, 299, 118)), ("MainBody", (5, 14, 299, 118)), ("MovingPart", (150, 48, 30, 8)),
@@ -82,7 +82,7 @@ def rifle():
         "weaponHandHeightOffset": -0.2847541570663452, "weaponHandOffsetRange": 0.3921833336353302,
         "leftHandOffsetRange": 0.4398137927055359, "leftHandHeightOffset": -0.0033399462699890138,
         "spriteOffset_x": 0.293729305267334, "spriteOffset_y": 0.2013387680053711,
-        "gunPointOffset_x": 0.36, "gunPointOffset_y": 0.134,
+        "gunPointOffset_x": 0.36, "gunPointOffset_y": 0.129,
         "magazineOffset_x": 0.22326290607452393, "magazineOffset_y": 0.2423933744430542,
         "barrelOffset_x": 0.26514285802841187, "barrelOffset_y": 0.11695237457752228, "aimerOffset_x": 0.045904770493507385, "aimerOffset_y": 0.12323809415102005,
         "gunstockOffset_x": -0.08761905878782272, "gunstockOffset_y": 0.024761900305747986,
