@@ -18,7 +18,7 @@ namespace LaserGun
         internal static ConfigEntry<int> BatteryItemId, ShotsPerBattery, PackCapacity;
         
         internal static ConfigEntry<bool> ShowPack, ShowPower;
-        internal static ConfigEntry<float> EnergyPerShot, FireRate, TrailLinger;
+        internal static ConfigEntry<float> EnergyPerShot, FireRate, TrailLinger, MuzzleX, MuzzleY;
         internal static ConfigEntry<float> EnergyPerSecond;
         internal static ConfigEntry<bool> VerboseLog;
 
@@ -49,6 +49,8 @@ namespace LaserGun
             IgniteGroundWithTarget = c.Bind("Fire", "IgniteGroundToo", false, "When a target catches fire, also light the ground under it (can spread through grass).");
 
             ShowPack = c.Bind("Visuals", "ShowBatteryPack", true, "Draw the battery pack under the rifle while a charged battery is loaded.");
+            MuzzleX = c.Bind("Visuals", "BeamStartForward", 0f, new ConfigDescription("Moves where the beam starts along the barrel, in gun-sprite pixels (+ forward, - back toward the player). Applies at once.", R(-150, 60)));
+            MuzzleY = c.Bind("Visuals", "BeamStartUp", 0f, new ConfigDescription("Moves where the beam starts up (+) or down (-) on the gun, in gun-sprite pixels. Applies at once.", R(-40, 40)));
             TrailLinger = c.Bind("Visuals", "TrailLinger", 1.2f, new ConfigDescription("Seconds a glowing trail hangs in the air along each shot's path before it fades out. 0 = off.", R(0, 10)));
             Beam = c.Bind("Visuals", "Beam", true, "Draw a bright laser beam behind each shot.");
             BeamWidth = c.Bind("Visuals", "BeamWidth", 0.05f, new ConfigDescription("Width (m) of the beam.", R(0.005f, 0.5f)));

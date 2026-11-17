@@ -197,7 +197,7 @@ namespace LaserGun
         {
             world = Vector3.zero;
             var body = w.weaponSpriteRenderer;
-            if (!Local(body, MuzzlePx, out var l, out _)) return false;
+            if (!Local(body, MuzzlePx + new Vector2(Settings.MuzzleX.Value, Settings.MuzzleY.Value), out var l, out _)) return false;
             world = body.transform.TransformPoint(l);
             return true;
         }
