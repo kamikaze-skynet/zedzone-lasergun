@@ -1,82 +1,22 @@
 using System;
-using System.Globalization;
 using System.IO;
 using UnityEngine;
 
 namespace LaserGun
 {
     // Battery firing for the Laser Rifle, plus the battery pack drawn on the gun.
-    // The game keeps the loaded battery's charge on the weapon as the "WeaponBatteryDurability" property (0-100).
-    // Its own CanFire refuses the rifle even with a full battery, so the rifle is allowed to fire while that
-    // charge is above zero and it isn't reloading, and every shot takes EnergyPerShot Wh of the loaded battery's
-    // capacity (remembered on the weapon as "LaserGunBatteryWh" when a battery is loaded).
     internal static class Battery
     {
         const string Key = "WeaponBatteryDurability";
         const string CapKey = "LaserGunBatteryWh";
 
-        internal static bool TryGet(ItemData d, out float pct) => TryGet(d, Key, out pct);
-
-        static bool TryGet(ItemData d, string key, out float pct)
-        {
-            pct = 0f;
-            var p = d?.itemPropertyPairs;
-            if (p == null) return false;
-            for (int i = 0; i < p.Count; i++)
-            {
-                var kv = p[i];
-                if (kv != null && kv.key == key)
-                    return float.TryParse(kv.value, NumberStyles.Float, CultureInfo.InvariantCulture, out pct);
-            }
-            return false;
-        }
-
-        static void Set(ItemData d, float pct) => Set(d, Key, pct, false);
-
-        static void Set(ItemData d, string key, float v, bool add)
-        {
-            var p = d?.itemPropertyPairs;
-            if (p == null) return;
-            string s = v.ToString("0.###", CultureInfo.InvariantCulture);
-            for (int i = 0; i < p.Count; i++)
-            {
-                var kv = p[i];
-                if (kv != null && kv.key == key) { kv.value = s; return; }
-            }
-            if (add) p.Add(new KeyValueDataPair { key = key, value = s });
-        }
-
-        // A battery went into the rifle: remember its capacity so each shot takes EnergyPerShot of it.
-        internal static void Loaded(ItemData weapon, ItemData battery)
-        {
-            if (weapon == null || battery == null || !Weapons.IsLaser(weapon.itemId)) return;
-            float cap = 0f;
-            try
-            {
-                var a = ItemManager.instance?.GetItemAttrById(battery.itemId);
-                var f = a?.GetItemFeatureByFeatureType(ItemFeatureType.Battery)?.TryCast<ItemFeature_Battery>();
-                if (f != null) cap = f.batteryCapacityFloat;
-            }
-            catch { }
-            if (cap > 0f) Set(weapon, CapKey, cap, true);
-            TryGet(weapon, out var pct);
-            PLog.Info($"Battery loaded: item {battery.itemId}, {cap:0.##} Wh, {pct:0.#}% charged");
-        }
-
-        internal static void Unloaded(ItemData weapon)
-        {
-            if (weapon == null || !Weapons.IsLaser(weapon.itemId)) return;
-            Set(weapon, CapKey, 0f, false);
-        }
-
-        static float PercentPerShot(ItemData weapon)
-        {
-            float cap = 0f;
-            if (!TryGet(weapon, CapKey, out cap) || cap <= 0f) cap = Math.Max(1, Settings.PackCapacity.Value);
-            return Math.Min(100f, 100f * Settings.EnergyPerShot.Value / cap);
-        }
-
-        static bool HasBattery(ItemData weapon) => TryGet(weapon, CapKey, out var cap) && cap > 0f;
+        // How the game's own battery weapons (Mining Laser, Tesla Gun) keep a loaded battery, read from the game code
+        // (ItemAttr_RangedWeapon.SwapBatteryIntoWeapon): on the weapon's ItemData.properties float array,
+        //   [1] = the loaded battery's item id, [2] = its remaining energy in Wh, [3] = loaded rounds (0 for them).
+        // "WeaponBatteryDurability" only carries the battery's wear and is left alone.
+        // Their beam code drains [2] over time. The rifle fires single shots instead, so each shot takes
+        // EnergyPerShot Wh from [2], and [3] is kept at "shots left" so the game's normal firing code runs.
+        const int IdSlot = 1, EnergySlot = 2, AmmoSlot = 3;
 
         static bool Mine(BasicRangedWeapon w)
         {
@@ -84,29 +24,65 @@ namespace LaserGun
             return a != null && a.feedingType == ItemAttr_RangedWeapon.FeedingType.Battery && Weapons.IsLaser(a.itemId);
         }
 
-        internal static void CanFire(BasicRangedWeapon w, ref bool result)
+        static Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppStructArray<float> Props(ItemData d)
         {
-            if (result || !Settings.Enabled.Value || !Mine(w)) return;
-            if (w.isReloading) return;
-            if (TryGet(w.weaponData, out var pct) && pct > 0.01f) result = true;
+            var p = d?.properties;
+            return p != null && p.Length > AmmoSlot ? p : null;
         }
 
-        // Fire prefix/postfix: if the game itself didn't take charge for this shot, take it here.
+        internal static bool HasBattery(ItemData weapon) { var p = Props(weapon); return p != null && p[IdSlot] >= 1f; }
+        internal static float Energy(ItemData weapon) { var p = Props(weapon); return p != null && p[IdSlot] >= 1f ? p[EnergySlot] : 0f; }
+
+        static int ShotsLeft(float energy) => (int)Math.Floor((energy + 0.001f) / Math.Max(0.1f, Settings.EnergyPerShot.Value));
+
+        // Keeps "loaded rounds" equal to the shots the battery still has.
+        internal static void Sync(ItemData weapon)
+        {
+            var p = Props(weapon); if (p == null) return;
+            float want = p[IdSlot] >= 1f ? ShotsLeft(p[EnergySlot]) : 0f;
+            if (p[AmmoSlot] != want) p[AmmoSlot] = want;
+        }
+
+        internal static void Swapped(ItemData weapon)
+        {
+            if (weapon == null || !Weapons.IsLaser(weapon.itemId)) return;
+            Sync(weapon);
+            var p = Props(weapon);
+            if (p != null) PLog.Info($"Battery loaded: item {p[IdSlot]:0}, {p[EnergySlot]:0.#} Wh, {p[AmmoSlot]:0} shots");
+        }
+
+        // The game is about to hand back "loaded ammo" from the rifle: it has none, only battery energy.
+        internal static void BeforeClearAmmo(ItemData weapon)
+        {
+            if (weapon == null || !Weapons.IsLaser(weapon.itemId)) return;
+            var p = Props(weapon); if (p != null) p[AmmoSlot] = 0f;
+        }
+
+        internal static void CanFire(BasicRangedWeapon w, ref bool result)
+        {
+            if (!Settings.Enabled.Value || !Mine(w)) return;
+            var d = w.weaponData;
+            Sync(d);
+            if (result || w.isReloading) return;
+            if (ShotsLeft(Energy(d)) >= 1) result = true;
+        }
+
+        // Fire prefix/postfix: one shot = EnergyPerShot Wh.
         internal static float Before(BasicRangedWeapon w)
         {
             if (!Mine(w)) return -1f;
-            return TryGet(w.weaponData, out var pct) ? pct : -1f;
+            var d = w.weaponData;
+            return HasBattery(d) ? Energy(d) : -1f;
         }
 
         internal static void After(BasicRangedWeapon w, float before)
         {
             if (before < 0f || !Mine(w)) return;
-            var d = w.weaponData;
-            if (!TryGet(d, out var now)) return;
-            // Exactly one shot's worth, whatever the game itself took (its energy-weapon code can empty it).
-            float after = Math.Max(0f, before - PercentPerShot(d));
-            Set(d, after);
-            if (Settings.VerboseLog.Value) PLog.Debug($"Battery {before:0.##}% -> {after:0.##}% (game left {now:0.##}%)");
+            var d = w.weaponData; var p = Props(d); if (p == null) return;
+            float after = Math.Max(0f, before - Settings.EnergyPerShot.Value);
+            p[EnergySlot] = after;
+            Sync(d);
+            if (Settings.VerboseLog.Value) PLog.Debug($"Battery {before:0.#} Wh -> {after:0.#} Wh ({p[AmmoSlot]:0} shots left)");
         }
 
         // ---- the pack on the gun
@@ -146,7 +122,8 @@ namespace LaserGun
             var t = body.transform.Find(ChildName);
             SpriteRenderer sr = t != null ? t.GetComponent<SpriteRenderer>() : null;
             var wd = w.weaponData;
-            bool loaded = (HasBattery(wd) || TryGet(wd, out var pct) && pct > 0.01f) && !w.isReloading;
+            Sync(wd);
+            bool loaded = HasBattery(wd) && !w.isReloading;
             if (sr == null)
             {
                 if (!loaded) return;

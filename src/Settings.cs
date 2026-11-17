@@ -33,7 +33,7 @@ namespace LaserGun
             BatteryItemId = c.Bind("Battery", "ReferenceBatteryId", 0,
                 "Item id of the battery that gives exactly ShotsPerBattery shots (bigger batteries give more). 0 = the Laser Battery Pack. LaserGun.log lists every battery with its id.");
             WeaponType = c.Bind("Battery", "WeaponMode", RangedWeaponType.Rifle, "How the game fires the rifle. Rifle fires real shots (damage, beam, fire); the game's EnergyWeapon mode drains the battery but does no damage with this gun. Applies at once.");
-            EnergyPerShot = c.Bind("Battery", "EnergyPerShot", 40f, new ConfigDescription("Battery energy (Wh, as the game shows it) used by one shot. A 2000 Wh Laser Battery Pack gives 2000 / this shots.", R(0.1f, 10000)));
+            EnergyPerShot = c.Bind("Battery", "EnergyPerShot", 40f, new ConfigDescription("Battery energy (Wh) one shot uses, taken from the loaded battery the same way the game's own battery guns drain it. A 2000 Wh Laser Battery Pack gives 2000 / this shots.", R(0.1f, 10000)));
             WeaponType.SettingChanged += (_, __) => Power.ApplyWeaponType();
             PackCapacity = c.Bind("Battery", "PackCapacity", 2000, new ConfigDescription("Energy a full Laser Battery Pack holds (same units as the game's batteries).", new AcceptableValueRange<int>(1, 100000)));
             ShotsPerBattery = c.Bind("Battery", "ShotsPerBattery", 50, new ConfigDescription("Shots from one full reference battery.", new AcceptableValueRange<int>(1, 1000)));

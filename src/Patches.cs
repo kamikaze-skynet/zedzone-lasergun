@@ -15,8 +15,8 @@ namespace LaserGun
             Patch(h, typeof(BasicRangedWeapon), nameof(BasicRangedWeapon.CanFire), null, nameof(CanFire_Post));
             Patch(h, typeof(BasicRangedWeapon), nameof(BasicRangedWeapon.Fire), nameof(Fire_Pre), nameof(Fire_Post));
             Patch(h, typeof(BasicRangedWeapon), nameof(BasicRangedWeapon.LateUpdate), null, nameof(WeaponLate_Post));
-            Patch(h, typeof(ItemAttr_RangedWeapon), nameof(ItemAttr_RangedWeapon.StoreWeaponBatteryDurability), null, nameof(StoreBattery_Post));
-            Patch(h, typeof(ItemAttr_RangedWeapon), nameof(ItemAttr_RangedWeapon.RestoreWeaponBatteryDurability), null, nameof(RestoreBattery_Post));
+            Patch(h, typeof(ItemAttr_RangedWeapon), nameof(ItemAttr_RangedWeapon.SwapBatteryIntoWeapon), null, nameof(SwapBattery_Post));
+            Patch(h, typeof(ItemAttr_RangedWeapon), nameof(ItemAttr_RangedWeapon.ClearAmmoFromRangedWeapon), nameof(ClearAmmo_Pre), null);
             Patch(h, typeof(BasicRangedWeapon), nameof(BasicRangedWeapon.OnFireButtonDown), nameof(FireDown_Pre), null);
             Patch(h, typeof(BasicRangedWeapon), nameof(BasicRangedWeapon.Fire_EnergyWeapon), nameof(FireEnergy_Pre), null);
             Patch(h, typeof(BasicRangedWeapon), nameof(BasicRangedWeapon.Fire_Cartridge), nameof(FireCartridge_Pre), null);
@@ -57,14 +57,14 @@ namespace LaserGun
             try { Battery.After(__instance, __state); } catch (Exception e) { PLog.Debug("Battery drain failed: " + e.Message); }
         }
 
-        static void StoreBattery_Post(ItemData weaponData, ItemData batteryData)
+        static void SwapBattery_Post(ItemData weaponData)
         {
-            try { Battery.Loaded(weaponData, batteryData); } catch (Exception e) { PLog.Warn("Battery load hook failed: " + e.Message); }
+            try { Battery.Swapped(weaponData); } catch (Exception e) { PLog.Warn("Battery load hook failed: " + e.Message); }
         }
 
-        static void RestoreBattery_Post(ItemData weaponData)
+        static void ClearAmmo_Pre(ItemData rangedWeaponItemData)
         {
-            try { Battery.Unloaded(weaponData); } catch (Exception e) { PLog.Warn("Battery unload hook failed: " + e.Message); }
+            try { Battery.BeforeClearAmmo(rangedWeaponItemData); } catch (Exception e) { PLog.Warn("Unload hook failed: " + e.Message); }
         }
 
         static bool _drawWarned;

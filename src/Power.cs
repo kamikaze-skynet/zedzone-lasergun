@@ -190,7 +190,7 @@ namespace LaserGun
             if (Settings.EnergyPerSecond.Value > 0f) gun.batteryEnergyPerSec = Settings.EnergyPerSecond.Value;
             else gun.batteryEnergyPerSec = 0.01f; // the mod takes 100/ShotsPerBattery % per shot itself (Battery.cs)
             sb.Append($" | reference battery: {(refCap > 0 ? $"{refName} {refCap:0.##}Wh" : "none found")}");
-            sb.Append($" | game drain {gun.batteryEnergyPerSec:0.###}/s, mod drain {100f / shots:0.##}% per shot (~{shots} shots per battery)");
+            sb.Append($" | {Settings.EnergyPerShot.Value:0.#} Wh per shot ({Settings.PackCapacity.Value / Math.Max(0.1f, Settings.EnergyPerShot.Value):0} shots per Laser Battery Pack)");
             PLog.Info(sb.ToString());
         }
     }

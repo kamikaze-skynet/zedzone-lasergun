@@ -45,6 +45,8 @@ namespace LaserGun
                 {
                     sb.Append($" | loaded ammo {BasicRangedWeapon.GetLoadedAmmo(d)} | weapon durability {d.durability:0.###}");
                     sb.Append(" | props " + Props(d));
+                    var fa = d.properties;
+                    if (fa != null) { sb.Append(" | slots"); for (int i = 0; i < fa.Length && i < 6; i++) sb.Append($" [{i}]={fa[i]:0.##}"); }
                     var inv = d.inventoryData;
                     var items = inv?.itemList;
                     if (items != null)
