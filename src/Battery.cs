@@ -8,12 +8,16 @@ namespace LaserGun
     // Battery firing for the Laser Rifle, plus the battery pack drawn on the gun.
     // The game keeps the loaded battery's charge on the weapon as the "WeaponBatteryDurability" property (0-100).
     // Its own CanFire refuses the rifle even with a full battery, so the rifle is allowed to fire while that
-    // charge is above zero and it isn't reloading, and every shot takes 100 / ShotsPerBattery percent.
+    // charge is above zero and it isn't reloading, and every shot takes EnergyPerShot Wh of the loaded battery's
+    // capacity (remembered on the weapon as "LaserGunBatteryWh" when a battery is loaded).
     internal static class Battery
     {
         const string Key = "WeaponBatteryDurability";
+        const string CapKey = "LaserGunBatteryWh";
 
-        internal static bool TryGet(ItemData d, out float pct)
+        internal static bool TryGet(ItemData d, out float pct) => TryGet(d, Key, out pct);
+
+        static bool TryGet(ItemData d, string key, out float pct)
         {
             pct = 0f;
             var p = d?.itemPropertyPairs;
@@ -21,22 +25,58 @@ namespace LaserGun
             for (int i = 0; i < p.Count; i++)
             {
                 var kv = p[i];
-                if (kv != null && kv.key == Key)
+                if (kv != null && kv.key == key)
                     return float.TryParse(kv.value, NumberStyles.Float, CultureInfo.InvariantCulture, out pct);
             }
             return false;
         }
 
-        static void Set(ItemData d, float pct)
+        static void Set(ItemData d, float pct) => Set(d, Key, pct, false);
+
+        static void Set(ItemData d, string key, float v, bool add)
         {
             var p = d?.itemPropertyPairs;
             if (p == null) return;
+            string s = v.ToString("0.###", CultureInfo.InvariantCulture);
             for (int i = 0; i < p.Count; i++)
             {
                 var kv = p[i];
-                if (kv != null && kv.key == Key) { kv.value = pct.ToString("0.###", CultureInfo.InvariantCulture); return; }
+                if (kv != null && kv.key == key) { kv.value = s; return; }
             }
+            if (add) p.Add(new KeyValueDataPair { key = key, value = s });
         }
+
+        // A battery went into the rifle: remember its capacity so each shot takes EnergyPerShot of it.
+        internal static void Loaded(ItemData weapon, ItemData battery)
+        {
+            if (weapon == null || battery == null || !Weapons.IsLaser(weapon.itemId)) return;
+            float cap = 0f;
+            try
+            {
+                var a = ItemManager.instance?.GetItemAttrById(battery.itemId);
+                var f = a?.GetItemFeatureByFeatureType(ItemFeatureType.Battery)?.TryCast<ItemFeature_Battery>();
+                if (f != null) cap = f.batteryCapacityFloat;
+            }
+            catch { }
+            if (cap > 0f) Set(weapon, CapKey, cap, true);
+            TryGet(weapon, out var pct);
+            PLog.Info($"Battery loaded: item {battery.itemId}, {cap:0.##} Wh, {pct:0.#}% charged");
+        }
+
+        internal static void Unloaded(ItemData weapon)
+        {
+            if (weapon == null || !Weapons.IsLaser(weapon.itemId)) return;
+            Set(weapon, CapKey, 0f, false);
+        }
+
+        static float PercentPerShot(ItemData weapon)
+        {
+            float cap = 0f;
+            if (!TryGet(weapon, CapKey, out cap) || cap <= 0f) cap = Math.Max(1, Settings.PackCapacity.Value);
+            return Math.Min(100f, 100f * Settings.EnergyPerShot.Value / cap);
+        }
+
+        static bool HasBattery(ItemData weapon) => TryGet(weapon, CapKey, out var cap) && cap > 0f;
 
         static bool Mine(BasicRangedWeapon w)
         {
@@ -62,10 +102,11 @@ namespace LaserGun
         {
             if (before < 0f || !Mine(w)) return;
             var d = w.weaponData;
-            if (!TryGet(d, out var now) || now < before - 0.0001f) return;
-            float per = 100f / Math.Max(1, Settings.ShotsPerBattery.Value);
-            Set(d, Math.Max(0f, before - per));
-            if (Settings.VerboseLog.Value) PLog.Debug($"Battery {before:0.##}% -> {Math.Max(0f, before - per):0.##}%");
+            if (!TryGet(d, out var now)) return;
+            // Exactly one shot's worth, whatever the game itself took (its energy-weapon code can empty it).
+            float after = Math.Max(0f, before - PercentPerShot(d));
+            Set(d, after);
+            if (Settings.VerboseLog.Value) PLog.Debug($"Battery {before:0.##}% -> {after:0.##}% (game left {now:0.##}%)");
         }
 
         // ---- the pack on the gun
@@ -104,7 +145,8 @@ namespace LaserGun
             if (body == null) return;
             var t = body.transform.Find(ChildName);
             SpriteRenderer sr = t != null ? t.GetComponent<SpriteRenderer>() : null;
-            bool loaded = TryGet(w.weaponData, out var pct) && pct > 0.01f && !w.isReloading;
+            var wd = w.weaponData;
+            bool loaded = (HasBattery(wd) || TryGet(wd, out var pct) && pct > 0.01f) && !w.isReloading;
             if (sr == null)
             {
                 if (!loaded) return;

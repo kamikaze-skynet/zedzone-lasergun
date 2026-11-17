@@ -23,6 +23,13 @@ namespace LaserGun
             PLog.Info($"Rifle: {what} (type {attr.weaponType}, feeding {attr.feedingType})");
         }
 
+        internal static void Note(string what)
+        {
+            if (_evNext.TryGetValue(what, out var t) && Time.unscaledTime < t) return;
+            _evNext[what] = Time.unscaledTime + 2f;
+            PLog.Info("Rifle: " + what);
+        }
+
         internal static void CanFire(BasicRangedWeapon w, bool result)
         {
             if (w == null) return;

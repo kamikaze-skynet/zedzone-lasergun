@@ -15,6 +15,8 @@ namespace LaserGun
             Patch(h, typeof(BasicRangedWeapon), nameof(BasicRangedWeapon.CanFire), null, nameof(CanFire_Post));
             Patch(h, typeof(BasicRangedWeapon), nameof(BasicRangedWeapon.Fire), nameof(Fire_Pre), nameof(Fire_Post));
             Patch(h, typeof(BasicRangedWeapon), nameof(BasicRangedWeapon.LateUpdate), null, nameof(WeaponLate_Post));
+            Patch(h, typeof(ItemAttr_RangedWeapon), nameof(ItemAttr_RangedWeapon.StoreWeaponBatteryDurability), null, nameof(StoreBattery_Post));
+            Patch(h, typeof(ItemAttr_RangedWeapon), nameof(ItemAttr_RangedWeapon.RestoreWeaponBatteryDurability), null, nameof(RestoreBattery_Post));
             Patch(h, typeof(BasicRangedWeapon), nameof(BasicRangedWeapon.OnFireButtonDown), nameof(FireDown_Pre), null);
             Patch(h, typeof(BasicRangedWeapon), nameof(BasicRangedWeapon.Fire_EnergyWeapon), nameof(FireEnergy_Pre), null);
             Patch(h, typeof(BasicRangedWeapon), nameof(BasicRangedWeapon.Fire_Cartridge), nameof(FireCartridge_Pre), null);
@@ -55,6 +57,16 @@ namespace LaserGun
             try { Battery.After(__instance, __state); } catch (Exception e) { PLog.Debug("Battery drain failed: " + e.Message); }
         }
 
+        static void StoreBattery_Post(ItemData weaponData, ItemData batteryData)
+        {
+            try { Battery.Loaded(weaponData, batteryData); } catch (Exception e) { PLog.Warn("Battery load hook failed: " + e.Message); }
+        }
+
+        static void RestoreBattery_Post(ItemData weaponData)
+        {
+            try { Battery.Unloaded(weaponData); } catch (Exception e) { PLog.Warn("Battery unload hook failed: " + e.Message); }
+        }
+
         static bool _drawWarned;
         static void WeaponLate_Post(BasicRangedWeapon __instance)
         {
@@ -70,6 +82,7 @@ namespace LaserGun
 
         static void Init_Post(BasicBullet __instance)
         {
+            try { if (__instance != null && Weapons.IsLaser(Weapons.ItemIdOf(__instance))) Diag.Note("laser shot spawned"); } catch { }
             try { Shots.OnFired(__instance, false); } catch (Exception e) { PLog.Error("Fire hook failed", e); }
         }
 
