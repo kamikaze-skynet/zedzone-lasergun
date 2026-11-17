@@ -58,7 +58,7 @@ RIFLE_REGIONS = [("Main", (5, 14, 299, 118)), ("MainBody", (5, 14, 299, 118)), (
                  ("Barrel", (246, 54, 30, 20)), ("Aimer", (110, 46, 90, 6)), ("Gunstock", (6, 52, 55, 50))]
 
 def rifle():
-    d = base("rifle", "RangedWeapon", 230, RIFLE_REGIONS, (4, 3), 0.92, 4.2, 2400.0, 0,
+    d = base("rifle", "RangedWeapon", 230, RIFLE_REGIONS, (6, 2), 0.92, 4.2, 2400.0, 0,
              [(8, 10), (29, 6), (13, 6)], 2, 1, [(8, 1)])
     d.update({
         "feedingType": 2, "exinjectShellMode": 0, "isMechWeapon": False, "isFlareGun": False,
