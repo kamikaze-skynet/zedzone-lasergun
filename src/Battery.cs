@@ -147,7 +147,7 @@ namespace LaserGun
         // Rifle sprite geometry in its own pixels (Main region 299x118, see tools/build_items.py), measured from the
         // region's centre, y up. The game builds the weapon sprite at its own pixels-per-unit, so everything here is
         // converted with the live sprite's pixelsPerUnit instead of assuming the mod.json value.
-        static readonly Vector2 MuzzlePx = new Vector2(121f, -8f);
+        static readonly Vector2 MuzzlePx = new Vector2(119f, 10.5f);
         static Texture2D _tex; static float _spritePpu;
 
         static Sprite PackSprite(float gunPpu)
