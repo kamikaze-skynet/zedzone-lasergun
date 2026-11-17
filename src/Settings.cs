@@ -17,6 +17,7 @@ namespace LaserGun
         internal static ConfigEntry<string> SoundFile;
         internal static ConfigEntry<int> BatteryItemId, ShotsPerBattery, PackCapacity;
         internal static ConfigEntry<RangedWeaponType> WeaponType;
+        internal static ConfigEntry<bool> ShowPack;
         internal static ConfigEntry<float> EnergyPerSecond;
         internal static ConfigEntry<bool> VerboseLog;
 
@@ -43,6 +44,7 @@ namespace LaserGun
 
             IgniteGroundWithTarget = c.Bind("Fire", "IgniteGroundToo", false, "When a target catches fire, also light the ground under it (can spread through grass).");
 
+            ShowPack = c.Bind("Visuals", "ShowBatteryPack", true, "Draw the battery pack under the rifle while a charged battery is loaded.");
             Beam = c.Bind("Visuals", "Beam", true, "Draw a bright laser beam behind each shot.");
             BeamWidth = c.Bind("Visuals", "BeamWidth", 0.05f, new ConfigDescription("Width (m) of the beam.", R(0.005f, 0.5f)));
             BeamFade = c.Bind("Visuals", "BeamFade", 0.07f, new ConfigDescription("Seconds the beam stays on screen.", R(0.01f, 1)));

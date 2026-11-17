@@ -188,9 +188,9 @@ namespace LaserGun
             float interval = gun.fireInterval > 0.001f ? gun.fireInterval : 0.15f;
             int shots = Math.Max(1, Settings.ShotsPerBattery.Value);
             if (Settings.EnergyPerSecond.Value > 0f) gun.batteryEnergyPerSec = Settings.EnergyPerSecond.Value;
-            else if (refCap > 0f) gun.batteryEnergyPerSec = refCap / (shots * interval);
+            else gun.batteryEnergyPerSec = 0.01f; // the mod takes 100/ShotsPerBattery % per shot itself (Battery.cs)
             sb.Append($" | reference battery: {(refCap > 0 ? $"{refName} {refCap:0.##}Wh" : "none found")}");
-            sb.Append($" | energy {gun.batteryEnergyPerSec:0.###} Wh/s of firing (~{shots} shots per reference battery at {interval:0.###}s/shot)");
+            sb.Append($" | game drain {gun.batteryEnergyPerSec:0.###}/s, mod drain {100f / shots:0.##}% per shot (~{shots} shots per battery)");
             PLog.Info(sb.ToString());
         }
     }

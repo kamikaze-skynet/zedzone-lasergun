@@ -13,6 +13,8 @@ namespace LaserGun
             Patch(h, typeof(BasicBullet), nameof(BasicBullet.OnHit), null, nameof(OnHit_Post));
             Patch(h, typeof(ModLoader), nameof(ModLoader.LoadAll), null, nameof(LoadAll_Post));
             Patch(h, typeof(BasicRangedWeapon), nameof(BasicRangedWeapon.CanFire), null, nameof(CanFire_Post));
+            Patch(h, typeof(BasicRangedWeapon), nameof(BasicRangedWeapon.Fire), nameof(Fire_Pre), nameof(Fire_Post));
+            Patch(h, typeof(BasicRangedWeapon), nameof(BasicRangedWeapon.LateUpdate), null, nameof(WeaponLate_Post));
             Patch(h, typeof(BasicRangedWeapon), nameof(BasicRangedWeapon.OnFireButtonDown), nameof(FireDown_Pre), null);
             Patch(h, typeof(BasicRangedWeapon), nameof(BasicRangedWeapon.Fire_EnergyWeapon), nameof(FireEnergy_Pre), null);
             Patch(h, typeof(BasicRangedWeapon), nameof(BasicRangedWeapon.Fire_Cartridge), nameof(FireCartridge_Pre), null);
@@ -42,8 +44,27 @@ namespace LaserGun
         static void FireEnergy_Pre(BasicRangedWeapon __instance) { try { Diag.Event(__instance, "Fire_EnergyWeapon"); } catch { } }
         static void FireCartridge_Pre(BasicRangedWeapon __instance) { try { Diag.Event(__instance, "Fire_Cartridge"); } catch { } }
 
-        static void CanFire_Post(BasicRangedWeapon __instance, bool __result)
+        static void Fire_Pre(BasicRangedWeapon __instance, out float __state)
         {
+            __state = -1f;
+            try { __state = Battery.Before(__instance); } catch (Exception e) { PLog.Debug("Battery pre failed: " + e.Message); }
+        }
+
+        static void Fire_Post(BasicRangedWeapon __instance, float __state)
+        {
+            try { Battery.After(__instance, __state); } catch (Exception e) { PLog.Debug("Battery drain failed: " + e.Message); }
+        }
+
+        static bool _drawWarned;
+        static void WeaponLate_Post(BasicRangedWeapon __instance)
+        {
+            try { Battery.Draw(__instance); }
+            catch (Exception e) { if (!_drawWarned) { _drawWarned = true; PLog.Warn("Pack drawing failed: " + e); } }
+        }
+
+        static void CanFire_Post(BasicRangedWeapon __instance, ref bool __result)
+        {
+            try { Battery.CanFire(__instance, ref __result); } catch (Exception e) { PLog.Debug("CanFire battery check failed: " + e.Message); }
             try { Diag.CanFire(__instance, __result); } catch (Exception e) { if (!_diagWarned) { _diagWarned = true; PLog.Warn("CanFire diag failed: " + e); } }
         }
 

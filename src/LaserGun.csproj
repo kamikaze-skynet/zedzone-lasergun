@@ -27,4 +27,7 @@
     <Reference Include="$(BepInExDir)\core\*.dll" Private="false" />
     <Reference Include="$(BepInExDir)\interop\*.dll" Exclude="$(BepInExDir)\interop\UnityEngine.dll" Private="false" />
   </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\pack.png" LogicalName="LaserGun.pack.png" />
+  </ItemGroup>
 </Project>
