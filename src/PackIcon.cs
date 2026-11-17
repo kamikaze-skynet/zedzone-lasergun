@@ -78,7 +78,7 @@ namespace LaserGun
         static void Scan()
         {
             if (Time.unscaledTime < _nextScan) return;
-            _nextScan = Time.unscaledTime + 1f;
+            _nextScan = Time.unscaledTime + 0.5f;
             var all = UnityEngine.Object.FindObjectsOfType<BasicItemUI>();
             if (all == null) return;
             for (int k = 0; k < all.Length; k++)
@@ -95,7 +95,8 @@ namespace LaserGun
 
         internal static void Tick()
         {
-            try { Scan(); } catch (Exception e) { Warn(e); }
+            bool due = Time.unscaledTime >= _nextScan;
+            try { Scan(); if (due) ScanSlots(); } catch (Exception e) { Warn(e); }
             for (int i = _tracked.Count - 1; i >= 0; i--)
             {
                 try
@@ -113,8 +114,53 @@ namespace LaserGun
         // The weapon slots on the character screen are their own kind of slot.
         internal static void WeaponSlot(CharacterWeaponSlotUI slot)
         {
-            try { if (slot != null) Apply(slot.weaponIcon, slot.currentWeaponData, "weapon slot"); }
+            try
+            {
+                if (slot == null) return;
+                var d = slot.currentWeaponData;
+                if (d == null)
+                {
+                    // slot without its own item record: if its picture was built for the rifle, use the rifle in hand
+                    string key = slot.cachedGunSpriteKey;
+                    var held = HeldRifle();
+                    if (held != null && !string.IsNullOrEmpty(key) && key.Contains(held.itemId.ToString())) d = held;
+                }
+                Apply(slot.weaponIcon, d, "weapon slot");
+            }
             catch (Exception e) { Warn(e); }
+        }
+
+        static ItemData HeldRifle()
+        {
+            try
+            {
+                var w = GameController.instance?.playerCharacter?.rangedWeapon;
+                var d = w != null ? w.weaponData : null;
+                return d != null && Weapons.IsLaser(d.itemId) ? d : null;
+            }
+            catch { return null; }
+        }
+
+        static bool _slotDiag;
+        static void ScanSlots()
+        {
+            var slots = UnityEngine.Object.FindObjectsOfType<CharacterWeaponSlotUI>();
+            if (slots != null)
+            {
+                for (int i = 0; i < slots.Length; i++)
+                {
+                    var sl = slots[i]; if (sl == null) continue;
+                    WeaponSlot(sl);
+                    if (!_slotDiag && Settings.VerboseLog.Value)
+                    {
+                        var d = sl.currentWeaponData; var ic = sl.weaponIcon;
+                        PLog.Info($"Weapon slot {sl.weaponSlotIndex}: item {(d == null ? "none" : d.itemId.ToString())}, picture key '{sl.cachedGunSpriteKey}', icon {(ic == null ? "none" : (ic.sprite == null ? "empty" : ic.sprite.name))}");
+                    }
+                }
+                if (slots.Length > 0) _slotDiag = true;
+            }
+            var eq = UnityEngine.Object.FindObjectsOfType<EquipmentUI_New>();
+            if (eq != null) for (int i = 0; i < eq.Length; i++) { var e = eq[i]; if (e != null) Apply(e.iconImage, e.itemdata, "equipment slot"); }
         }
 
         static void Warn(Exception e) { if (_warned) return; _warned = true; PLog.Warn("Inventory picture failed: " + e); }

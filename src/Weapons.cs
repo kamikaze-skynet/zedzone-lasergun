@@ -12,9 +12,13 @@ namespace LaserGun
         static int _expected = -1;
         static float _nextCheck;
 
+        // set while the game's mod editor previews the Laser Rifle (it uses a temporary item id there)
+        internal static bool PreviewOurs;
+
         internal static bool IsLaser(int itemId)
         {
             if (itemId < 0) return false;
+            if (PreviewOurs) { try { if (PreviewPanel.IsPreviewTempId(itemId)) return true; } catch { } }
             if (_expected < 0 || (_ids.Count < _expected && Time.unscaledTime >= _nextCheck)) Resolve();
             return _ids.Contains(itemId);
         }

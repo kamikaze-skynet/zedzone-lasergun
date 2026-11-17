@@ -14,6 +14,8 @@ namespace LaserGun
         const string RifleGuid = "93b81951-6391-4707-beb4-0ea971889dc7";
         const string PackGuid = "cef9bff0-579f-401b-a5a2-890dc6fd3ec8";
 
+        internal static int PackId() => IdOf(PackGuid);
+
         internal static int IdOf(string guid)
         {
             try

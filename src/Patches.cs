@@ -20,6 +20,10 @@ namespace LaserGun
             Patch(h, typeof(BasicRangedWeapon), nameof(BasicRangedWeapon.OnFireButtonDown), nameof(FireDown_Pre), null);
             Patch(h, typeof(BasicRangedWeapon), nameof(BasicRangedWeapon.Fire_EnergyWeapon), nameof(FireEnergy_Pre), null);
             Patch(h, typeof(BasicRangedWeapon), nameof(BasicRangedWeapon.Fire_Cartridge), nameof(FireCartridge_Pre), nameof(FireCartridge_Post));
+            Patch(h, typeof(PreviewPanel), nameof(PreviewPanel.Setup), null, nameof(PreviewSetup_Post));
+            Patch(h, typeof(PreviewPanel), nameof(PreviewPanel.OnReload), null, nameof(PreviewReload_Post));
+            Patch(h, typeof(PreviewPanel), nameof(PreviewPanel.OnFirePreview), nameof(PreviewFire_Pre), null);
+            Patch(h, typeof(PreviewPanel), nameof(PreviewPanel.OnDisable), null, nameof(PreviewOff_Post));
             Patch(h, typeof(CharacterWeaponSlotUI), nameof(CharacterWeaponSlotUI.Update), null, nameof(WeaponSlot_Post));
             Patch(h, typeof(BasicItemUI), nameof(BasicItemUI.RefreshItemUI), null, nameof(ItemUI_Post));
             Patch(h, typeof(BasicItemUI), nameof(BasicItemUI.RefreshItemUIIconSpriteImmediate), null, nameof(ItemUI_Post));
@@ -105,6 +109,19 @@ namespace LaserGun
             try { Battery.BeforeClearAmmo(rangedWeaponItemData); } catch (Exception e) { PLog.Warn("Unload hook failed: " + e.Message); }
         }
 
+        static void PreviewSetup_Post(PreviewPanel __instance, BaseModData data) { Preview.Setup(__instance, data); }
+        static void PreviewReload_Post(PreviewPanel __instance) { Preview.Load(__instance, "reload"); }
+        static void PreviewFire_Pre(PreviewPanel __instance)
+        {
+            try
+            {
+                if (!Weapons.PreviewOurs) return;
+                var d = __instance.currentCharacter?.rangedWeapon?.weaponData;
+                if (d != null && Battery.Energy(d) < Settings.EnergyPerShot.Value) Preview.Load(__instance, "fire");
+            }
+            catch { }
+        }
+        static void PreviewOff_Post() { Preview.Closed(); }
         static void WeaponSlot_Post(CharacterWeaponSlotUI __instance) { PackIcon.WeaponSlot(__instance); }
         static void ItemUI_Post(BasicItemUI __instance) { PackIcon.Refreshed(__instance); }
 

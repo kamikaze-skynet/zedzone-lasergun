@@ -46,6 +46,15 @@ namespace LaserGun
             if (p[AmmoSlot] != want) p[AmmoSlot] = want;
         }
 
+        // Puts a full battery straight into a weapon (mod editor preview). false = the weapon has no battery slots.
+        internal static bool Fill(ItemData weapon, int batteryId, float energy)
+        {
+            var p = Props(weapon); if (p == null) return false;
+            p[IdSlot] = batteryId > 0 ? batteryId : 1f; p[EnergySlot] = energy;
+            Sync(weapon);
+            return true;
+        }
+
         internal static void Swapped(ItemData weapon)
         {
             if (weapon == null || !Weapons.IsLaser(weapon.itemId)) return;
