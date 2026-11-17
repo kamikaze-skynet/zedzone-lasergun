@@ -212,6 +212,8 @@ namespace LaserGun
             var wd = w.weaponData;
             Sync(wd);
             bool loaded = HasBattery(wd) && !w.isReloading && !(Swapping && wd.Pointer == _heldPtr);
+            // The game also draws the loaded battery itself as a "magazine", oversized and off the gun: hide that one.
+            try { var gm = w.magazineSpriteRenderer; if (gm != null && gm.enabled) gm.enabled = false; } catch { }
             if (!Local(body, PackCentrePx, out var pos, out var gunPpu)) return;
             if (sr == null)
             {
