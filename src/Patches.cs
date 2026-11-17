@@ -19,7 +19,7 @@ namespace LaserGun
             Patch(h, typeof(ItemAttr_RangedWeapon), nameof(ItemAttr_RangedWeapon.ClearAmmoFromRangedWeapon), nameof(ClearAmmo_Pre), null);
             Patch(h, typeof(BasicRangedWeapon), nameof(BasicRangedWeapon.OnFireButtonDown), nameof(FireDown_Pre), null);
             Patch(h, typeof(BasicRangedWeapon), nameof(BasicRangedWeapon.Fire_EnergyWeapon), nameof(FireEnergy_Pre), null);
-            Patch(h, typeof(BasicRangedWeapon), nameof(BasicRangedWeapon.Fire_Cartridge), nameof(FireCartridge_Pre), null);
+            Patch(h, typeof(BasicRangedWeapon), nameof(BasicRangedWeapon.Fire_Cartridge), nameof(FireCartridge_Pre), nameof(FireCartridge_Post));
             Patch(h, typeof(ZedZone.Net.NetProjectileSync), nameof(ZedZone.Net.NetProjectileSync.SpawnVisualBullet), nameof(Spawn_Pre), nameof(Spawn_Post));
         }
 
@@ -44,16 +44,38 @@ namespace LaserGun
         static bool _diagWarned;
         static void FireDown_Pre(BasicRangedWeapon __instance) { try { Diag.Event(__instance, "fire button down"); } catch { } }
         static void FireEnergy_Pre(BasicRangedWeapon __instance) { try { Diag.Event(__instance, "Fire_EnergyWeapon"); } catch { } }
-        static void FireCartridge_Pre(BasicRangedWeapon __instance) { try { Diag.Event(__instance, "Fire_Cartridge"); } catch { } }
-
-        static void Fire_Pre(BasicRangedWeapon __instance, out float __state)
+        // Fire_Cartridge can be reached without Fire(); hold it to the same pause and count the shot there if so.
+        static bool FireCartridge_Pre(BasicRangedWeapon __instance, out float __state)
         {
             __state = -1f;
+            try { Diag.Event(__instance, "Fire_Cartridge"); } catch { }
+            try
+            {
+                if (_inFire) return true;
+                if (!Battery.Allow(__instance)) return false;
+                __state = Battery.Before(__instance);
+            }
+            catch { }
+            return true;
+        }
+        static void FireCartridge_Post(BasicRangedWeapon __instance, float __state)
+        {
+            try { if (!_inFire) Battery.After(__instance, __state); } catch { }
+        }
+        static bool _inFire;
+
+        static bool Fire_Pre(BasicRangedWeapon __instance, out float __state)
+        {
+            __state = -1f;
+            try { if (!Battery.Allow(__instance)) return false; } catch { }
             try { __state = Battery.Before(__instance); } catch (Exception e) { PLog.Debug("Battery pre failed: " + e.Message); }
+            _inFire = true;
+            return true;
         }
 
         static void Fire_Post(BasicRangedWeapon __instance, float __state)
         {
+            _inFire = false;
             try { Battery.After(__instance, __state); } catch (Exception e) { PLog.Debug("Battery drain failed: " + e.Message); }
         }
 

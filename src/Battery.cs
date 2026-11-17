@@ -64,14 +64,23 @@ namespace LaserGun
             if (!Settings.Enabled.Value || !Mine(w)) return;
             var d = w.weaponData;
             Sync(d);
+            // The game doesn't hold battery-fed cartridge fire to the weapon's fire interval (it fired every frame),
+            // so the pause between shots is enforced here.
+            if (!Ready()) { result = false; return; }
             if (result || w.isReloading) return;
-            // The game's own CanFire also enforces the pause between shots; never override that.
-            float interval = 60f / Math.Max(10f, Settings.FireRate.Value);
-            if (UnityEngine.Time.time - _lastShot < interval) return;
             if (ShotsLeft(Energy(d)) >= 1) result = true;
         }
 
         // Fire prefix/postfix: one shot = EnergyPerShot Wh.
+        static bool Ready() => UnityEngine.Time.time - _lastShot >= 60f / Math.Max(1f, Settings.FireRate.Value);
+
+        // Fire prefix: false skips a shot that comes before the pause is over or with no energy left.
+        internal static bool Allow(BasicRangedWeapon w)
+        {
+            if (!Settings.Enabled.Value || !Mine(w)) return true;
+            return Ready() && ShotsLeft(Energy(w.weaponData)) >= 1;
+        }
+
         internal static float Before(BasicRangedWeapon w)
         {
             if (!Mine(w)) return -1f;
