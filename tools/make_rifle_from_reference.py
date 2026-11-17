@@ -2,13 +2,15 @@ import sys, numpy as np, cv2
 from PIL import Image, ImageFilter
 src, out_sprite, out_full = sys.argv[1:4]
 img = cv2.imread(src); h, w = img.shape[:2]
-# paint out the winged-skull emblem and the lettering with the flat body green
-mask = np.zeros((h, w), np.uint8)
-cv2.rectangle(mask, (1082, 104), (1532, 216), 255, -1)
-cv2.rectangle(mask, (1108, 204), (1527, 252), 255, -1)
-img = cv2.inpaint(img, mask, 7, cv2.INPAINT_TELEA)
-m3 = cv2.GaussianBlur(mask.astype(np.float32) / 255, (0, 0), 3)[..., None]
-img = (img * (1 - m3) + cv2.GaussianBlur(img, (0, 0), 4) * m3).astype(np.uint8)
+# the side emblem and lettering are kept as drawn (PAINT_OUT=True paints them out)
+PAINT_OUT = False
+if PAINT_OUT:
+    mask = np.zeros((h, w), np.uint8)
+    cv2.rectangle(mask, (1082, 104), (1532, 216), 255, -1)
+    cv2.rectangle(mask, (1108, 204), (1527, 252), 255, -1)
+    img = cv2.inpaint(img, mask, 7, cv2.INPAINT_TELEA)
+    m3 = cv2.GaussianBlur(mask.astype(np.float32) / 255, (0, 0), 3)[..., None]
+    img = (img * (1 - m3) + cv2.GaussianBlur(img, (0, 0), 4) * m3).astype(np.uint8)
 # cut out the white background (flood from the border; also closed white gaps like the trigger guard)
 white = (img.min(axis=2) > 232).astype(np.uint8)
 n, lab = cv2.connectedComponents(white)
