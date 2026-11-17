@@ -29,5 +29,6 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\pack.png" LogicalName="LaserGun.pack.png" />
+    <EmbeddedResource Include="Resources\rifle_loaded.png" LogicalName="LaserGun.rifle_loaded.png" />
   </ItemGroup>
 </Project>

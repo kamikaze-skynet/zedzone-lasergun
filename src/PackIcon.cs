@@ -1,18 +1,62 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace LaserGun
 {
-    // Draws the battery pack on the rifle's inventory picture while a pack is loaded. The game only shows the bare
-    // gun there, so a small image is slipped in behind the gun's icon and kept lined up with it.
+    // Inventory pictures: while a battery pack is loaded, the rifle's picture is swapped for one with the pack
+    // fitted (Resources/rifle_loaded.png, the same 299x118 box as the bare rifle so nothing moves or resizes).
+    // The swap uses Image.overrideSprite, so the game's own picture stays in place underneath and comes back
+    // by itself when the pack is taken out.
     static class PackIcon
     {
-        const string HolderName = "LaserGun_PackIcon";
         static readonly List<BasicItemUI> _tracked = new List<BasicItemUI>();
-        static Sprite _sprite;
-        static bool _warned, _logged;
+        static Sprite _loaded;
+        static bool _failed, _warned, _logged, _diag;
+        static float _nextScan;
+
+        static Sprite Loaded()
+        {
+            if (_loaded != null) return _loaded;
+            if (_failed) return null;
+            try
+            {
+                using var s = typeof(PackIcon).Assembly.GetManifestResourceStream("LaserGun.rifle_loaded.png");
+                if (s == null) { _failed = true; PLog.Warn("Loaded-rifle picture missing"); return null; }
+                var ms = new MemoryStream(); s.CopyTo(ms);
+                var tex = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+                if (!ImageConversion.LoadImage(tex, ms.ToArray())) { _failed = true; return null; }
+                tex.filterMode = FilterMode.Bilinear; tex.wrapMode = TextureWrapMode.Clamp;
+                tex.hideFlags = HideFlags.HideAndDontSave;
+                _loaded = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f), 230f);
+                _loaded.hideFlags = HideFlags.HideAndDontSave;
+            }
+            catch (Exception e) { _failed = true; PLog.Warn("Loaded-rifle picture failed: " + e.Message); }
+            return _loaded;
+        }
+
+        // Puts the loaded picture on (or takes it off) one image showing the given item.
+        internal static void Apply(Image icon, ItemData d, string where)
+        {
+            if (icon == null) return;
+            var ld = Loaded(); if (ld == null) return;
+            bool want = d != null && Weapons.IsLaser(d.itemId) && Settings.ShowPack.Value && Battery.HasBattery(d);
+            var cur = icon.overrideSprite; // returns the normal sprite when no override is set
+            bool has = cur != null && cur.Pointer == ld.Pointer;
+            if (want && !has)
+            {
+                var gs = icon.sprite;
+                if (!_logged)
+                {
+                    _logged = true;
+                    PLog.Info($"Inventory picture swapped to the loaded rifle ({where}); the game's picture is {(gs == null ? "none" : $"{gs.rect.width:0}x{gs.rect.height:0}")}, ours {ld.rect.width:0}x{ld.rect.height:0}");
+                }
+                icon.overrideSprite = ld;
+            }
+            else if (!want && has) icon.overrideSprite = null;
+        }
 
         internal static void Refreshed(BasicItemUI ui)
         {
@@ -21,15 +65,13 @@ namespace LaserGun
                 if (ui == null) return;
                 var d = ui.itemdata;
                 if (d == null || !Weapons.IsLaser(d.itemId)) return;
-                for (int i = 0; i < _tracked.Count; i++) if (_tracked[i].Pointer == ui.Pointer) { Update(ui); return; }
-                _tracked.Add(ui);
-                Update(ui);
+                bool known = false;
+                for (int i = 0; i < _tracked.Count; i++) if (_tracked[i].Pointer == ui.Pointer) { known = true; break; }
+                if (!known) _tracked.Add(ui);
+                Apply(ui.iconImage, d, "bag slot");
             }
             catch (Exception e) { Warn(e); }
         }
-
-        static float _nextScan;
-        static bool _diag;
 
         // The game fills item pictures in from a background task that does not go through the refresh calls,
         // so open item slots are also looked over once a second.
@@ -47,12 +89,7 @@ namespace LaserGun
                 bool known = false;
                 for (int i = 0; i < _tracked.Count; i++) if (_tracked[i].Pointer == ui.Pointer) { known = true; break; }
                 if (!known) _tracked.Add(ui);
-                if (!_diag)
-                {
-                    _diag = true;
-                    var ic = ui.iconImage;
-                    PLog.Info($"Inventory slot with the rifle found ({(known ? "refresh" : "scan")}): icon {(ic == null ? "none" : ic.gameObject.name)} enabled {ic != null && ic.enabled} sprite {(ic == null || ic.sprite == null ? "none" : ic.sprite.name)} parent {(ic == null || ic.transform.parent == null ? "none" : ic.transform.parent.name)} battery {Battery.HasBattery(d)}");
-                }
+                if (!_diag) { _diag = true; PLog.Info("Inventory: rifle found in a bag slot"); }
             }
         }
 
@@ -65,90 +102,21 @@ namespace LaserGun
                 {
                     var ui = _tracked[i];
                     if (ui == null) { _tracked.RemoveAt(i); continue; }
-                    if (!Update(ui)) _tracked.RemoveAt(i);
+                    var d = ui.itemdata;
+                    Apply(ui.iconImage, d, "bag slot");
+                    if (d == null || !Weapons.IsLaser(d.itemId)) _tracked.RemoveAt(i); // slot reused for another item
                 }
                 catch (Exception e) { _tracked.RemoveAt(i); Warn(e); }
             }
         }
 
-        static void Warn(Exception e) { if (_warned) return; _warned = true; PLog.Warn("Inventory pack picture failed: " + e); }
-
-        // false = this slot no longer shows the rifle
-        static bool Update(BasicItemUI ui)
+        // The weapon slots on the character screen are their own kind of slot.
+        internal static void WeaponSlot(CharacterWeaponSlotUI slot)
         {
-            var icon = ui.iconImage;
-            if (icon == null) return false;
-            var iconRt = icon.rectTransform;
-            var parent = iconRt.parent;
-            if (parent == null) return false;
-            var ht = parent.Find(HolderName);
-            var d = ui.itemdata;
-            bool mine = d != null && Weapons.IsLaser(d.itemId);
-            bool show = mine && Settings.ShowPack.Value && Battery.HasBattery(d) && icon.enabled;
-            if (!show)
-            {
-                if (ht != null && ht.gameObject.activeSelf) ht.gameObject.SetActive(false);
-                return mine;
-            }
-            var sp = Sprite(); if (sp == null) return true;
-
-            RectTransform holder; Image img;
-            if (ht == null)
-            {
-                var go = new GameObject(HolderName);
-                holder = go.AddComponent<RectTransform>();
-                holder.SetParent(parent, false);
-                try { go.AddComponent<LayoutElement>().ignoreLayout = true; } catch { }
-                var child = new GameObject("pack");
-                img = child.AddComponent<Image>();
-                img.raycastTarget = false;
-                img.rectTransform.SetParent(holder, false);
-            }
-            else
-            {
-                holder = ht.Cast<RectTransform>();
-                img = holder.GetChild(0).GetComponent<Image>();
-            }
-            if (!holder.gameObject.activeSelf) holder.gameObject.SetActive(true);
-            // behind the gun picture: just before it among its siblings
-            int want = iconRt.GetSiblingIndex();
-            int have = holder.GetSiblingIndex();
-            if (have > want) holder.SetSiblingIndex(want);
-            else if (have < want - 1) holder.SetSiblingIndex(want - 1);
-
-            // same box as the gun picture
-            holder.anchorMin = iconRt.anchorMin; holder.anchorMax = iconRt.anchorMax; holder.pivot = iconRt.pivot;
-            holder.anchoredPosition = iconRt.anchoredPosition; holder.sizeDelta = iconRt.sizeDelta;
-            holder.localRotation = iconRt.localRotation; holder.localScale = iconRt.localScale;
-
-            // how big the gun is drawn inside that box
-            var r = iconRt.rect; var gs = icon.sprite != null ? icon.sprite.rect : new Rect(0, 0, 299, 118);
-            float w = Mathf.Abs(r.width), h = Mathf.Abs(r.height);
-            if (icon.preserveAspect && gs.height > 0.5f && h > 0.5f)
-            {
-                float a = gs.width / gs.height;
-                if (w / h > a) w = h * a; else h = w / a;
-            }
-            float sx = w / 299f, sy = h / 118f; // rifle picture is 299 x 118 px
-            var px = Battery.PackPx();
-            float size = Settings.PackSize.Value;
-            var rt = img.rectTransform;
-            rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0.5f, 0.5f);
-            rt.anchoredPosition = new Vector2(px.x * sx, px.y * sy);
-            rt.sizeDelta = new Vector2(Battery.PackWidth * sx * size * Settings.PackWide.Value, Battery.PackWidth * 140f / 112f * sy * size);
-            if (img.sprite != sp) img.sprite = sp;
-            img.color = icon.color;
-            if (!_logged) { _logged = true; PLog.Info($"Inventory pack picture: gun icon {w:0}x{h:0} (sprite {gs.width:0}x{gs.height:0}, keep aspect {icon.preserveAspect}, rotation {iconRt.localEulerAngles.z:0})"); }
-            return true;
+            try { if (slot != null) Apply(slot.weaponIcon, slot.currentWeaponData, "weapon slot"); }
+            catch (Exception e) { Warn(e); }
         }
 
-        static Sprite Sprite()
-        {
-            if (_sprite != null) return _sprite;
-            var tex = Battery.PackTexture(); if (tex == null) return null;
-            _sprite = UnityEngine.Sprite.Create(tex, new Rect(8, tex.height - 2 - 140, 112, 140), new Vector2(0.5f, 0.5f), 100f);
-            _sprite.hideFlags = HideFlags.HideAndDontSave;
-            return _sprite;
-        }
+        static void Warn(Exception e) { if (_warned) return; _warned = true; PLog.Warn("Inventory picture failed: " + e); }
     }
 }
