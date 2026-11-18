@@ -22,6 +22,11 @@ The plugin (`src/`, BepInEx IL2CPP, `girthy_mods.zedzone.lasergun`):
 
 Settings: `BepInEx\config\girthy_mods.zedzone.lasergun.cfg`, or Mod Menu (F11). Log: `BepInEx\LaserGun.log`.
 
+## Requires
+
+- ZED ZONE (Windows, Steam)
+- [ZED ZONE Code Mod Loader](https://steamcommunity.com/sharedfiles/filedetails/?id=3834614258) - run its install.cmd once, then start the game through Steam.
+
 ## Build
 
 ```powershell
