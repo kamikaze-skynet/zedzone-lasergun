@@ -27,6 +27,9 @@ In co-op, other players see your beams and hear the shots. Everyone needs the mo
 
 Every number (damage, fire chance, beam colour and width, sound volume) can be changed in BepInEx\config\girthy_mods.zedzone.lasergun.cfg. Want a different sound? Drop any WAV named fire.wav into the mod's LaserGun folder.
 
-Needs BepInEx (IL2CPP) with the ZED ZONE mod loader. Log: BepInEx\LaserGun.log
+[h2]Requires[/h2]
+[url=https://steamcommunity.com/sharedfiles/filedetails/?id=3834614258]ZED ZONE Code Mod Loader[/url] - run its install.cmd once, then start the game through Steam.
+
+Log: BepInEx\LaserGun.log
 
 [b]Settings and keys:[/b] Press [b]F11[/b] in game to open [b]Mod Menu[/b] (Steam installs it with this mod) to change this mod's settings without editing files.
